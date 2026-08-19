@@ -1,6 +1,19 @@
 version: '3.8'
 
 services:
+  # 🌐 Frontend Web (Landing Page & Dashboard)
+  frontend:
+    build:
+      context: ./frontend-web
+      dockerfile: Dockerfile
+    container_name: plastcontrol_frontend
+    restart: always
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+
+  # 🗄️ Base de Datos PostgreSQL
   postgres:
     image: postgres:16-alpine
     container_name: plastcontrol_postgres
@@ -14,7 +27,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  # Opcional: Interfaz visual de base de datos
+  # 📊 Panel de Administración PgAdmin (Opcional)
   pgadmin:
     image: dpage/pgadmin4
     container_name: plastcontrol_pgadmin
