@@ -8,20 +8,17 @@ import {
   TrendingDown, 
   PlusCircle, 
   CheckCircle2, 
-  Clock, 
   ArrowUpRight, 
   Factory, 
   Sparkles,
-  Shield,
-  FileSpreadsheet
+  Shield
 } from 'lucide-react';
 import { 
   mockDashboardKPIs, 
   mockMaterials, 
   mockEntries, 
   mockMovements, 
-  mockRequests,
-  mockAlerts 
+  mockRequests
 } from '../data/mockData';
 import type { UserProfile, ProductionRequest, BatchEntry } from '../types';
 
