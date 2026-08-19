@@ -1,225 +1,348 @@
 import type { RawMaterial, BatchEntry, ProductionRequest, ScrapRecord, StockAlert, UserProfile } from '../types';
 
+export interface DashboardKPIs {
+  totalMateriaPrimaKg: number;
+  stockDisponibleKg: number;
+  materialesStockBajoCount: number;
+  materiaPrimaRecibidaKg: number;
+  consumoDelMesKg: number;
+  mermaDelMesKg: number;
+}
+
+export const mockDashboardKPIs: DashboardKPIs = {
+  totalMateriaPrimaKg: 12500,
+  stockDisponibleKg: 9850,
+  materialesStockBajoCount: 8,
+  materiaPrimaRecibidaKg: 1250,
+  consumoDelMesKg: 4800,
+  mermaDelMesKg: 350,
+};
+
 export const mockMaterials: RawMaterial[] = [
   {
     id: 'mat-001',
-    code: 'HDPE-5502',
+    code: 'MP001',
+    name: 'Polipropileno (PP)',
+    type: 'RESINA',
+    category: 'INYECCION',
+    density: 0.905,
+    meltFlowIndex: 12.0,
+    unit: 'kg',
+    currentStockKg: 1500,
+    minStockKg: 2000,
+    maxCapacityKg: 5000,
+    siloLocation: 'Almacén 1 (Silo A1)',
+    status: 'BAJO',
+    colorCode: '#06b6d4',
+    supplier: 'Proveedor A (Petroquímica)',
+    lastUpdated: '18/08/2026',
+  },
+  {
+    id: 'mat-002',
+    code: 'MP002',
+    name: 'Masterbatch Negro (MB)',
+    type: 'MASTERBATCH',
+    category: 'EXTRUSION',
+    density: 1.25,
+    meltFlowIndex: 8.5,
+    unit: 'kg',
+    currentStockKg: 250,
+    minStockKg: 300,
+    maxCapacityKg: 1000,
+    siloLocation: 'Almacén 1 (Estante B)',
+    status: 'BAJO',
+    colorCode: '#f59e0b',
+    supplier: 'Proveedor B (Pigmentos)',
+    lastUpdated: '18/08/2026',
+  },
+  {
+    id: 'mat-003',
+    code: 'MP003',
+    name: 'Policloruro de Vinilo (PVC)',
+    type: 'RESINA',
+    category: 'EXTRUSION',
+    density: 1.40,
+    meltFlowIndex: 1.2,
+    unit: 'kg',
+    currentStockKg: 900,
+    minStockKg: 800,
+    maxCapacityKg: 3000,
+    siloLocation: 'Almacén 2 (Silo C)',
+    status: 'OPTIMO',
+    colorCode: '#10b981',
+    supplier: 'Proveedor C (Polímeros)',
+    lastUpdated: '19/08/2026',
+  },
+  {
+    id: 'mat-004',
+    code: 'MP004',
     name: 'Polietileno de Alta Densidad (HDPE)',
     type: 'RESINA',
     category: 'SOPLADO',
     density: 0.955,
     meltFlowIndex: 0.35,
-    unit: 'KG',
-    currentStockKg: 18450,
-    minStockKg: 6000,
-    maxCapacityKg: 25000,
-    siloLocation: 'Silo A-01 (Exterior)',
-    status: 'OPTIMO',
-    colorCode: '#06b6d4',
-    supplier: 'Braskem Química',
-    lastUpdated: 'Hace 10 min',
-  },
-  {
-    id: 'mat-002',
-    code: 'PP-CP-0330',
-    name: 'Polipropileno Copolímero (PP-CP)',
-    type: 'RESINA',
-    category: 'INYECCION',
-    density: 0.905,
-    meltFlowIndex: 30.0,
-    unit: 'KG',
-    currentStockKg: 3200,
-    minStockKg: 5000,
-    maxCapacityKg: 20000,
-    siloLocation: 'Silo B-02 (Planta 1)',
-    status: 'BAJO',
-    colorCode: '#f59e0b',
-    supplier: 'Petroquímica Andina',
-    lastUpdated: 'Hace 25 min',
-  },
-  {
-    id: 'mat-003',
-    code: 'LDPE-FILM-2100',
-    name: 'Polietileno de Baja Densidad (LDPE Film)',
-    type: 'RESINA',
-    category: 'EXTRUSION',
-    density: 0.922,
-    meltFlowIndex: 2.0,
-    unit: 'KG',
-    currentStockKg: 1500,
-    minStockKg: 4000,
-    maxCapacityKg: 18000,
-    siloLocation: 'Silo C-01 (Nave Extrusión)',
-    status: 'CRITICO',
-    colorCode: '#ef4444',
-    supplier: 'Dow Chemical',
-    lastUpdated: 'Hace 5 min',
-  },
-  {
-    id: 'mat-004',
-    code: 'MB-AZUL-08',
-    name: 'Masterbatch Concentrado Azul Cobalto',
-    type: 'MASTERBATCH',
-    category: 'INYECCION',
-    density: 1.12,
-    meltFlowIndex: 12.0,
-    unit: 'KG',
-    currentStockKg: 850,
-    minStockKg: 300,
-    maxCapacityKg: 2000,
-    siloLocation: 'Almacén Seco R-04',
+    unit: 'kg',
+    currentStockKg: 4200,
+    minStockKg: 3000,
+    maxCapacityKg: 8000,
+    siloLocation: 'Almacén 1 (Silo A2)',
     status: 'OPTIMO',
     colorCode: '#3b82f6',
-    supplier: 'Clariant Pigmentos',
-    lastUpdated: 'Hace 2 horas',
+    supplier: 'Proveedor A (Petroquímica)',
+    lastUpdated: '19/08/2026',
   },
   {
     id: 'mat-005',
-    code: 'REC-HDPE-MOL',
-    name: 'Material Recuperado HDPE (Molido / Peletizado)',
-    type: 'RECUPERADO',
-    category: 'EXTRUSION',
-    density: 0.950,
-    meltFlowIndex: 0.45,
-    unit: 'KG',
-    currentStockKg: 5400,
-    minStockKg: 2000,
-    maxCapacityKg: 10000,
-    siloLocation: 'Tolva Reciclaje R-01',
+    code: 'MP005',
+    name: 'Polietileno Tereftalato (PET Cristal)',
+    type: 'RESINA',
+    category: 'SOPLADO',
+    density: 1.38,
+    meltFlowIndex: 2.5,
+    unit: 'kg',
+    currentStockKg: 3000,
+    minStockKg: 2500,
+    maxCapacityKg: 6000,
+    siloLocation: 'Almacén 2 (Silo D)',
     status: 'OPTIMO',
-    colorCode: '#10b981',
-    supplier: 'Circuito Interno de Molino',
-    lastUpdated: 'Hace 45 min',
+    colorCode: '#8b5cf6',
+    supplier: 'Proveedor D (Resinas del Sur)',
+    lastUpdated: '17/08/2026',
   },
   {
     id: 'mat-006',
-    code: 'AD-CACO3-80',
-    name: 'Carga Mineral Carbonato de Calcio (CaCO3 80%)',
+    code: 'MP006',
+    name: 'Aditivo Anti-UV y Desmoldante',
     type: 'ADITIVO',
-    category: 'EXTRUSION',
-    density: 1.70,
-    meltFlowIndex: 1.5,
-    unit: 'KG',
-    currentStockKg: 4200,
-    minStockKg: 1500,
-    maxCapacityKg: 8000,
-    siloLocation: 'Almacén Tolvas B-03',
+    category: 'INYECCION',
+    density: 1.05,
+    meltFlowIndex: 5.0,
+    unit: 'kg',
+    currentStockKg: 180,
+    minStockKg: 200,
+    maxCapacityKg: 500,
+    siloLocation: 'Almacén 1 (Estante A)',
+    status: 'BAJO',
+    colorCode: '#ec4899',
+    supplier: 'Proveedor E (Química Fina)',
+    lastUpdated: '18/08/2026',
+  },
+  {
+    id: 'mat-007',
+    code: 'MP007',
+    name: 'Material Recuperado Molido (PP)',
+    type: 'RECUPERADO',
+    category: 'INYECCION',
+    density: 0.910,
+    meltFlowIndex: 14.0,
+    unit: 'kg',
+    currentStockKg: 1450,
+    minStockKg: 1000,
+    maxCapacityKg: 4000,
+    siloLocation: 'Almacén Reciclaje (Tolva R1)',
     status: 'OPTIMO',
-    colorCode: '#a855f7',
-    supplier: 'Omya Minerales',
-    lastUpdated: 'Ayer',
+    colorCode: '#14b8a6',
+    supplier: 'Circuito Molino Interno',
+    lastUpdated: 'Hoy',
+  },
+  {
+    id: 'mat-008',
+    code: 'MP008',
+    name: 'Masterbatch Blanco Rutilo',
+    type: 'MASTERBATCH',
+    category: 'EXTRUSION',
+    density: 1.65,
+    meltFlowIndex: 7.0,
+    unit: 'kg',
+    currentStockKg: 120,
+    minStockKg: 150,
+    maxCapacityKg: 600,
+    siloLocation: 'Almacén 1 (Estante B)',
+    status: 'BAJO',
+    colorCode: '#f43f5e',
+    supplier: 'Proveedor B (Pigmentos)',
+    lastUpdated: '18/08/2026',
   }
 ];
 
 export const mockEntries: BatchEntry[] = [
   {
     id: 'ent-01',
-    entryCode: 'ENT-2026-089',
+    entryCode: 'ENT-2026-001',
     materialId: 'mat-001',
-    materialName: 'Polietileno de Alta Densidad (HDPE)',
-    supplierName: 'Braskem Química',
-    supplierBatch: 'BRK-8921-X',
-    quantityKg: 8000,
-    invoiceNumber: 'F001-92384',
-    siloDestination: 'Silo A-01',
+    materialName: 'Polipropileno (PP)',
+    supplierName: 'Proveedor A',
+    supplierBatch: 'PP-2026-0818',
+    quantityKg: 1000,
+    invoiceNumber: 'FAC-00258',
+    siloDestination: 'Almacén 1',
     qualityCertificatePassed: true,
     receivedBy: 'Rodrigo Alarcón (Almacén)',
-    createdAt: 'Hoy, 09:15 AM'
+    createdAt: '18/08/2026'
   },
   {
     id: 'ent-02',
-    entryCode: 'ENT-2026-088',
-    materialId: 'mat-004',
-    materialName: 'Masterbatch Azul Cobalto',
-    supplierName: 'Clariant Pigmentos',
-    supplierBatch: 'CLR-AZ-4410',
-    quantityKg: 500,
-    invoiceNumber: 'F002-11029',
-    siloDestination: 'Almacén Seco R-04',
+    entryCode: 'ENT-2026-002',
+    materialId: 'mat-002',
+    materialName: 'Masterbatch Negro (MB)',
+    supplierName: 'Proveedor B',
+    supplierBatch: 'MB-2026-0818',
+    quantityKg: 250,
+    invoiceNumber: 'FAC-00259',
+    siloDestination: 'Almacén 1',
     qualityCertificatePassed: true,
     receivedBy: 'Rodrigo Alarcón (Almacén)',
-    createdAt: 'Ayer, 04:30 PM'
+    createdAt: '18/08/2026'
+  },
+  {
+    id: 'ent-03',
+    entryCode: 'ENT-2026-003',
+    materialId: 'mat-003',
+    materialName: 'Policloruro de Vinilo (PVC)',
+    supplierName: 'Proveedor C',
+    supplierBatch: 'PVC-2026-0819',
+    quantityKg: 900,
+    invoiceNumber: 'FAC-00260',
+    siloDestination: 'Almacén 2',
+    qualityCertificatePassed: true,
+    receivedBy: 'Rodrigo Alarcón (Almacén)',
+    createdAt: '19/08/2026'
+  }
+];
+
+export interface StockMovement {
+  id: string;
+  fecha: string;
+  materiaPrima: string;
+  tipo: 'Entrada' | 'Salida' | 'Devolución' | 'Ajuste' | 'Merma' | 'Transferencia';
+  cantidadKg: number;
+  usuario: string;
+  origenDestino: string;
+}
+
+export const mockMovements: StockMovement[] = [
+  {
+    id: 'mov-01',
+    fecha: '18/08/2026',
+    materiaPrima: 'Polipropileno',
+    tipo: 'Entrada',
+    cantidadKg: 1000,
+    usuario: 'Juan (Almacén)',
+    origenDestino: 'Proveedor A'
+  },
+  {
+    id: 'mov-02',
+    fecha: '18/08/2026',
+    materiaPrima: 'Polipropileno',
+    tipo: 'Salida',
+    cantidadKg: -500,
+    usuario: 'Pedro (Producción)',
+    origenDestino: 'Línea de Inyección 01'
+  },
+  {
+    id: 'mov-03',
+    fecha: '19/08/2026',
+    materiaPrima: 'Polipropileno',
+    tipo: 'Devolución',
+    cantidadKg: 20,
+    usuario: 'Pedro (Producción)',
+    origenDestino: 'Sobrante Devuelto a Almacén 1'
+  },
+  {
+    id: 'mov-04',
+    fecha: '19/08/2026',
+    materiaPrima: 'Masterbatch Negro',
+    tipo: 'Salida',
+    cantidadKg: -20,
+    usuario: 'Pedro (Producción)',
+    origenDestino: 'Línea de Inyección 01'
   }
 ];
 
 export const mockRequests: ProductionRequest[] = [
   {
     id: 'req-01',
-    orderNumber: 'OP-EXT-402',
-    line: 'Línea de Extrusión 03',
-    processType: 'EXTRUSION',
-    productName: 'Rollo Film Termocontraíble 50um',
+    orderNumber: 'ORDEN #00025',
+    line: 'Línea de Producción A',
+    processType: 'INYECCION',
+    productName: 'Envase plástico 1 litro / Botella (5.000 unidades)',
     requiredMaterials: [
-      { materialName: 'LDPE Film 2100', quantityKg: 800 },
-      { materialName: 'Recuperado HDPE', quantityKg: 200 }
+      { materialName: 'Polipropileno', quantityKg: 500 },
+      { materialName: 'Masterbatch', quantityKg: 20 },
+      { materialName: 'Aditivo', quantityKg: 5 }
     ],
-    requestedBy: 'Ing. Marcos Vedia (Producción)',
+    requestedBy: 'Encargado de Producción',
     status: 'PENDIENTE',
-    createdAt: 'Hace 20 min'
+    createdAt: 'Hoy, 08:30 AM'
   },
   {
     id: 'req-02',
-    orderNumber: 'OP-INJ-115',
-    line: 'Inyectora Negri Bossi 320T',
-    processType: 'INYECCION',
-    productName: 'Tapa Rosca 28mm PCO1881',
+    orderNumber: 'ORDEN #00024',
+    line: 'Línea de Extrusión 02',
+    processType: 'EXTRUSION',
+    productName: 'Film Termocontraíble 50 micras (1.200 kg)',
     requiredMaterials: [
-      { materialName: 'PP Copolímero 0330', quantityKg: 1200 },
-      { materialName: 'Masterbatch Azul Cobalto', quantityKg: 24 }
+      { materialName: 'HDPE Resina', quantityKg: 1000 },
+      { materialName: 'Material Recuperado', quantityKg: 200 }
     ],
-    requestedBy: 'Ing. Marcos Vedia (Producción)',
+    requestedBy: 'Encargado de Producción',
     status: 'APROBADA',
-    createdAt: 'Hace 2 horas'
+    createdAt: 'Ayer, 02:15 PM'
   }
 ];
 
 export const mockScrap: ScrapRecord[] = [
   {
     id: 'scr-01',
-    orderNumber: 'OP-EXT-399',
-    machineLine: 'Extrusora Coex 3 Capas',
-    rawMaterialUsedKg: 1250,
-    finishedProductKg: 1180,
-    recoverableScrapKg: 55,
-    discardScrapKg: 15,
-    scrapPercentage: 5.6,
-    cause: 'Calibración de espesor de arranque',
-    operator: 'Jorge Soliz',
-    createdAt: 'Hoy, 11:00 AM'
-  },
-  {
-    id: 'scr-02',
-    orderNumber: 'OP-INJ-112',
+    orderNumber: 'ORDEN #00025',
     machineLine: 'Inyectora 320T',
-    rawMaterialUsedKg: 900,
-    finishedProductKg: 875,
-    recoverableScrapKg: 20,
+    rawMaterialUsedKg: 500,
+    finishedProductKg: 480,
+    recoverableScrapKg: 15,
     discardScrapKg: 5,
-    scrapPercentage: 2.7,
-    cause: 'Coladas y bebederos de molde',
-    operator: 'Daniel Vargas',
-    createdAt: 'Ayer, 06:10 PM'
+    scrapPercentage: 4.0,
+    cause: 'Desperdicio durante producción y arranque de máquina',
+    operator: 'Operador 01',
+    createdAt: '19/08/2026'
   }
 ];
 
 export const mockAlerts: StockAlert[] = [
   {
     id: 'alt-01',
-    materialName: 'Polietileno de Baja Densidad (LDPE Film)',
-    silo: 'Silo C-01 (Nave Extrusión)',
-    currentKg: 1500,
-    minKg: 4000,
+    materialName: 'Masterbatch Negro (MB002)',
+    silo: 'Almacén 1 (Estante B)',
+    currentKg: 30,
+    minKg: 50,
     severity: 'CRITICAL',
-    timestamp: 'Hace 15 min'
+    timestamp: 'Hoy, 10:00 AM'
   },
   {
     id: 'alt-02',
-    materialName: 'Polipropileno Copolímero (PP-CP)',
-    silo: 'Silo B-02 (Planta 1)',
-    currentKg: 3200,
-    minKg: 5000,
+    materialName: 'Polipropileno (MP001)',
+    silo: 'Almacén 1 (Silo A1)',
+    currentKg: 1500,
+    minKg: 2000,
     severity: 'WARNING',
-    timestamp: 'Hace 45 min'
+    timestamp: '18/08/2026'
+  },
+  {
+    id: 'alt-03',
+    materialName: 'Aditivo Anti-UV (MP006)',
+    silo: 'Almacén 1 (Estante A)',
+    currentKg: 180,
+    minKg: 200,
+    severity: 'WARNING',
+    timestamp: '18/08/2026'
+  },
+  {
+    id: 'alt-04',
+    materialName: 'Masterbatch Blanco (MP008)',
+    silo: 'Almacén 1 (Estante B)',
+    currentKg: 120,
+    minKg: 150,
+    severity: 'WARNING',
+    timestamp: '18/08/2026'
   }
 ];
 
@@ -230,7 +353,7 @@ export const mockUsers: UserProfile[] = [
     email: 'admin@plastcontrol.com',
     role: 'ADMIN',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    shift: 'General / 24h'
+    shift: 'Administrador General'
   },
   {
     id: 'u-02',
@@ -238,14 +361,14 @@ export const mockUsers: UserProfile[] = [
     email: 'almacen@plastcontrol.com',
     role: 'ALMACEN',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    shift: 'Turno Mañana (07:00 - 15:00)'
+    shift: 'Encargado de Almacén'
   },
   {
     id: 'u-03',
-    name: 'Ing. Marcos Vedia',
+    name: 'Ing. Pedro Ramos',
     email: 'produccion@plastcontrol.com',
     role: 'PRODUCCION',
     avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-    shift: 'Turno Rotativo Planta'
+    shift: 'Encargado de Producción'
   }
 ];
