@@ -5,7 +5,7 @@ import { RoleSimulator } from './components/RoleSimulator';
 import { InteractiveDemo } from './components/InteractiveDemo';
 import { mockUsers } from './data/mockData';
 import type { UserProfile } from './types';
-import { Menu, X, Shield, Bell } from 'lucide-react';
+import { Menu, X, Shield } from 'lucide-react';
 
 export function App() {
   const [activeSection, setActiveSection] = useState<string>('dashboard');
