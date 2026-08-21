@@ -4,6 +4,8 @@ import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
+import { RawMaterialsModule } from './raw-materials/raw-materials.module';
+import { EntriesModule } from './entries/entries.module';
 
 @Module({
   imports: [
@@ -14,6 +16,8 @@ import { UsersModule } from './users/users.module';
     PrismaModule,
     UsersModule,
     AuthModule,
+    RawMaterialsModule,
+    EntriesModule,
   ],
   controllers: [AppController],
   providers: [],
