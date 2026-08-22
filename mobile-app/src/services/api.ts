@@ -1,6 +1,12 @@
 import axios, { isAxiosError } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { LoginPayload, LoginResponse, User } from '../types';
+import type {
+  LoginPayload,
+  LoginResponse,
+  RawMaterial,
+  RawMaterialFilters,
+  User,
+} from '../types';
 
 /**
  * URL base del backend (Persona 1 / NestJS).
@@ -56,6 +62,23 @@ export const authApi = {
       AsyncStorage.removeItem(REFRESH_TOKEN_KEY),
       AsyncStorage.removeItem(USER_KEY),
     ]);
+  },
+};
+
+export const rawMaterialsApi = {
+  async getAll(filters: RawMaterialFilters = {}): Promise<RawMaterial[]> {
+    const params: Record<string, string> = {};
+    if (filters.search) params.search = filters.search;
+    if (filters.type) params.type = filters.type;
+    if (filters.minStockAlert) params.minStockAlert = 'true';
+
+    const { data } = await api.get<RawMaterial[]>('/raw-materials', { params });
+    return data;
+  },
+
+  async getById(id: string): Promise<RawMaterial> {
+    const { data } = await api.get<RawMaterial>(`/raw-materials/${id}`);
+    return data;
   },
 };
 
