@@ -1,17 +1,40 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { DashboardPrincipal } from './components/DashboardPrincipal';
+import { RawMaterialsView } from './components/RawMaterialsView';
+import { BatchEntriesView } from './components/BatchEntriesView';
+import { ProductionOrdersView } from './components/ProductionOrdersView';
+import { ScrapControlView } from './components/ScrapControlView';
+import { SuppliersView } from './components/SuppliersView';
+import { ReportsView } from './components/ReportsView';
+import { UsersConfigView } from './components/UsersConfigView';
 import { RoleSimulator } from './components/RoleSimulator';
 import { InteractiveDemo } from './components/InteractiveDemo';
 import { mockUsers } from './data/mockData';
+import { apiConfig } from './services/api';
 import type { UserProfile } from './types';
-import { Menu, X, Shield } from 'lucide-react';
+import { Menu, X, Shield, Activity, RefreshCw } from 'lucide-react';
 
 export function App() {
   const [activeSection, setActiveSection] = useState<string>('dashboard');
   const [isRoleModalOpen, setIsRoleModalOpen] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<UserProfile>(mockUsers[0]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+  const [isApiOnline, setIsApiOnline] = useState<boolean>(false);
+  const [isCheckingApi, setIsCheckingApi] = useState<boolean>(false);
+
+  const checkBackendStatus = async () => {
+    setIsCheckingApi(true);
+    const status = await apiConfig.checkHealth();
+    setIsApiOnline(status.online);
+    setIsCheckingApi(false);
+  };
+
+  useEffect(() => {
+    checkBackendStatus();
+    const interval = setInterval(checkBackendStatus, 15000); // Check cada 15 segs
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex">
@@ -82,9 +105,26 @@ export function App() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* API Status Badge */}
+            <button
+              onClick={checkBackendStatus}
+              title={`API Backend NestJS: ${isApiOnline ? 'En Vivo (Conectado :3000)' : 'Modo Mock / Offline'}. Clic para verificar.`}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all ${
+                isApiOnline
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
+                  : 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
+              }`}
+            >
+              <Activity className={`w-3 h-3 ${isApiOnline ? 'text-emerald-400 animate-pulse' : 'text-amber-400'}`} />
+              <span className="hidden sm:inline font-bold">
+                {isApiOnline ? 'API REST: Live :3000' : 'API: Modo Mock'}
+              </span>
+              <RefreshCw className={`w-2.5 h-2.5 ml-0.5 ${isCheckingApi ? 'animate-spin' : 'opacity-60'}`} />
+            </button>
+
             <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] text-slate-400">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>Persona B (Frontend Web)</span>
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+              <span>Persona 2 (Web)</span>
             </div>
 
             <button
@@ -100,34 +140,45 @@ export function App() {
 
         {/* Dynamic Main Body */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-          {activeSection === 'dashboard' ? (
+          {activeSection === 'dashboard' && (
             <DashboardPrincipal
               currentUser={currentUser}
               onOpenRoleModal={() => setIsRoleModalOpen(true)}
               onNavigateSection={(sec) => setActiveSection(sec)}
             />
-          ) : (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between p-4 rounded-xl bg-slate-900 border border-slate-800">
-                <div>
-                  <h2 className="text-lg font-bold text-white font-outfit uppercase">
-                    Módulo: {activeSection.replace('-', ' ')}
-                  </h2>
-                  <p className="text-xs text-slate-400">
-                    Interactividad conectada con el flujo de materia prima.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setActiveSection('dashboard')}
-                  className="px-3 py-1.5 text-xs font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 rounded-lg hover:bg-cyan-500/20"
-                >
-                  Volver al Dashboard Principal
-                </button>
-              </div>
+          )}
 
-              {/* Functional interactive view */}
-              <InteractiveDemo />
-            </div>
+          {(activeSection === 'materias-primas' || activeSection === 'inventario' || activeSection === 'lotes') && (
+            <RawMaterialsView />
+          )}
+
+          {(activeSection === 'registrar-materia' || activeSection === 'entradas') && (
+            <BatchEntriesView />
+          )}
+
+          {(activeSection === 'salidas' || activeSection === 'produccion' || activeSection === 'ordenes' || activeSection === 'consumo') && (
+            <ProductionOrdersView />
+          )}
+
+          {activeSection === 'merma' && (
+            <ScrapControlView />
+          )}
+
+          {activeSection === 'proveedores' && (
+            <SuppliersView />
+          )}
+
+          {(activeSection === 'reportes' || activeSection === 'movimientos') && (
+            <ReportsView />
+          )}
+
+          {(activeSection === 'usuarios' || activeSection === 'configuracion') && (
+            <UsersConfigView />
+          )}
+
+          {/* Demo interactiva general de apoyo */}
+          {activeSection === 'demo-interactiva' && (
+            <InteractiveDemo />
           )}
         </main>
       </div>
