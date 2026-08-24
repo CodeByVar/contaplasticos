@@ -8,6 +8,8 @@ import { RawMaterialsModule } from './raw-materials/raw-materials.module';
 import { EntriesModule } from './entries/entries.module';
 import { ProductionRequestsModule } from './production-requests/production-requests.module';
 import { ProductionModule } from './production/production.module';
+import { SuppliersModule } from './suppliers/suppliers.module';
+import { MovementsModule } from './movements/movements.module';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { ProductionModule } from './production/production.module';
     EntriesModule,
     ProductionRequestsModule,
     ProductionModule,
+    SuppliersModule,
+    MovementsModule,
   ],
   controllers: [AppController],
   providers: [],

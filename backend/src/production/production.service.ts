@@ -12,8 +12,8 @@ export class ProductionService {
       throw new BadRequestException('El consumo no puede ser menor que la produccion y la merma registrada');
     }
 
-    const request = await this.prisma.productionRequest.findUnique({
-      where: { id: data.productionOrderId },
+    const request = await this.prisma.productionRequest.findFirst({
+      where: { OR: [{ id: data.productionOrderId }, { orderCode: data.productionOrderId }] },
       include: { materials: true },
     });
     if (!request) throw new NotFoundException('Orden de produccion no encontrada');
@@ -26,6 +26,18 @@ export class ProductionService {
       : ((data.scrapRecoverableKg + data.scrapDiscardKg) / data.consumedRawMaterialKg) * 100;
 
     return this.prisma.$transaction(async (transaction) => {
+      const material = data.materialId
+        ? await transaction.rawMaterial.findUnique({ where: { id: data.materialId } })
+        : null;
+
+      if (data.materialId && !material) {
+        throw new NotFoundException('Materia prima del consumo no encontrada');
+      }
+
+      if (material && material.currentStockKg < data.consumedRawMaterialKg) {
+        throw new BadRequestException('Stock insuficiente para registrar el consumo');
+      }
+
       const record = await transaction.scrapRecord.create({
         data: {
           productionRequestId: request.id,
@@ -45,6 +57,28 @@ export class ProductionService {
         where: { id: request.id },
         data: { status: 'COMPLETADA' },
       });
+
+      if (material) {
+        const nextStockKg = material.currentStockKg - data.consumedRawMaterialKg + data.scrapRecoverableKg;
+        await transaction.rawMaterial.update({
+          where: { id: material.id },
+          data: {
+            currentStockKg: nextStockKg,
+            status: this.calculateStatus(nextStockKg, material.minStockKg),
+          },
+        });
+
+        await transaction.stockMovement.create({
+          data: {
+            type: 'CONSUMO',
+            quantityKg: data.consumedRawMaterialKg,
+            materialId: material.id,
+            userId: operatorId,
+            productionRequestId: request.id,
+            notes: `Consumo de ${request.orderCode}`,
+          },
+        });
+      }
 
       if (data.scrapRecoverableKg > 0 && data.materialId) {
         await transaction.stockMovement.create({
@@ -68,5 +102,11 @@ export class ProductionService {
       include: { productionRequest: true, material: true, operator: { select: { id: true, name: true } } },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  private calculateStatus(currentStockKg: number, minStockKg: number) {
+    if (currentStockKg <= minStockKg * 0.5) return 'CRITICO' as const;
+    if (currentStockKg <= minStockKg) return 'BAJO' as const;
+    return 'OPTIMO' as const;
   }
 }
