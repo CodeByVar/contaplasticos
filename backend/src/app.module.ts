@@ -6,6 +6,8 @@ import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 import { RawMaterialsModule } from './raw-materials/raw-materials.module';
 import { EntriesModule } from './entries/entries.module';
+import { ProductionRequestsModule } from './production-requests/production-requests.module';
+import { ProductionModule } from './production/production.module';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { EntriesModule } from './entries/entries.module';
     AuthModule,
     RawMaterialsModule,
     EntriesModule,
+    ProductionRequestsModule,
+    ProductionModule,
   ],
   controllers: [AppController],
   providers: [],
