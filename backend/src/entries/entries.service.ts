@@ -56,6 +56,16 @@ export class EntriesService {
         },
       });
 
+      await transaction.stockMovement.create({
+        data: {
+          type: 'ENTRADA',
+          quantityKg: data.quantityKg,
+          materialId: material.id,
+          userId: receivedById,
+          notes: `Entrada ${entryCode}`,
+        },
+      });
+
       return entry;
     });
   }
