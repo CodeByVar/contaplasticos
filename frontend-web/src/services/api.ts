@@ -442,6 +442,75 @@ export const alertsApi = {
 };
 
 // -------------------------------------------------------------
+// 6.1. PROVEEDORES (/api/suppliers)
+// -------------------------------------------------------------
+export const suppliersApi = {
+  async getAll(): Promise<{ data: any[]; isLive: boolean }> {
+    return requestWithFallback<any[]>(
+      '/suppliers',
+      { method: 'GET' },
+      () => [
+        {
+          id: 'prov-01',
+          code: 'PROV-BRASKEM',
+          name: 'Braskem Idesa S.A.P.I.',
+          contactName: 'Roberto Viana',
+          email: 'contacto.ventas@braskem.com',
+          phone: '+52 55 5000 8000',
+        },
+        {
+          id: 'prov-02',
+          code: 'PROV-DOW',
+          name: 'Dow Chemical Company',
+          contactName: 'Laura Méndez',
+          email: 'resinas.latam@dow.com',
+          phone: '+1 800 258 2436',
+        },
+        {
+          id: 'prov-03',
+          code: 'PROV-SABIC',
+          name: 'SABIC Petrochemicals',
+          contactName: 'Carlos Andrade',
+          email: 'orders.sabic@sabic.com',
+          phone: '+1 713 555 0199',
+        },
+        {
+          id: 'prov-04',
+          code: 'PROV-PIGMENTOS',
+          name: 'Colorants & Masterbatch Corp',
+          contactName: 'Mariana Duarte',
+          email: 'ventas@colorants.com',
+          phone: '+58 212 555 4321',
+        },
+      ]
+    );
+  },
+
+  async create(data: { code: string; name: string; contactName?: string; email?: string; phone?: string }): Promise<{ data: any; isLive: boolean }> {
+    return requestWithFallback<any>(
+      '/suppliers',
+      {
+        method: 'POST',
+        body: JSON.stringify(data)
+      },
+      () => ({
+        id: `prov-${Date.now()}`,
+        ...data,
+      })
+    );
+  },
+
+  async remove(id: string): Promise<{ data: any; isLive: boolean }> {
+    return requestWithFallback<any>(
+      `/suppliers/${id}`,
+      { method: 'DELETE' },
+      () => ({ success: true })
+    );
+  }
+};
+
+
+// -------------------------------------------------------------
 // 7. KPIS Y DASHBOARD
 // -------------------------------------------------------------
 export const dashboardApi = {

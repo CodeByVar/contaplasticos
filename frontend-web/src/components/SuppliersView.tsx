@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Building2, 
   Phone, 
@@ -10,8 +10,10 @@ import {
   CheckCircle2, 
   X, 
   ExternalLink,
-  ShieldCheck
+  ShieldCheck,
+  Loader2
 } from 'lucide-react';
+import { suppliersApi } from '../services/api';
 
 interface SupplierItem {
   id: string;
@@ -26,61 +28,12 @@ interface SupplierItem {
   status: 'ACTIVO' | 'EN_EVALUACION';
 }
 
-const initialSuppliers: SupplierItem[] = [
-  {
-    id: 'prov-01',
-    code: 'PROV-BRASKEM',
-    name: 'Braskem Idesa S.A.P.I.',
-    country: 'Brasil / México',
-    materialsSupplied: ['Polietileno de Alta Densidad (HDPE)', 'Polietileno de Baja Densidad (LDPE)'],
-    contactPerson: 'Roberto Viana',
-    email: 'contacto.ventas@braskem.com',
-    phone: '+52 55 5000 8000',
-    qualityRating: 5,
-    status: 'ACTIVO'
-  },
-  {
-    id: 'prov-02',
-    code: 'PROV-DOW',
-    name: 'Dow Chemical Company',
-    country: 'Estados Unidos',
-    materialsSupplied: ['Polietileno Lineal (LLDPE)', 'Polímeros Especiales'],
-    contactPerson: 'Laura Méndez',
-    email: 'resinas.latam@dow.com',
-    phone: '+1 800 258 2436',
-    qualityRating: 5,
-    status: 'ACTIVO'
-  },
-  {
-    id: 'prov-03',
-    code: 'PROV-SABIC',
-    name: 'SABIC Petrochemicals',
-    country: 'Arabia Saudita / Global',
-    materialsSupplied: ['Polipropileno Homopolímero (PP-H)', 'Polipropileno Copolímero (PP-CP)'],
-    contactPerson: 'Carlos Andrade',
-    email: 'orders.sabic@sabic.com',
-    phone: '+1 713 555 0199',
-    qualityRating: 5,
-    status: 'ACTIVO'
-  },
-  {
-    id: 'prov-04',
-    code: 'PROV-PIGMENTOS',
-    name: 'Colorants & Masterbatch Corp',
-    country: 'Nacional',
-    materialsSupplied: ['Masterbatch Negro Rutilo', 'Masterbatch Blanco', 'Aditivos UV'],
-    contactPerson: 'Mariana Duarte',
-    email: 'ventas@colorants.com',
-    phone: '+58 212 555 4321',
-    qualityRating: 4,
-    status: 'ACTIVO'
-  }
-];
-
 export const SuppliersView: React.FC = () => {
-  const [suppliers, setSuppliers] = useState<SupplierItem[]>(initialSuppliers);
+  const [suppliers, setSuppliers] = useState<SupplierItem[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>('');
   const [showModal, setShowModal] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
   const [formData, setFormData] = useState({
     code: '',
@@ -92,22 +45,62 @@ export const SuppliersView: React.FC = () => {
     phone: ''
   });
 
-  const handleCreate = (e: React.FormEvent) => {
+  const loadSuppliers = async () => {
+    try {
+      setIsLoading(true);
+      const res = await suppliersApi.getAll();
+      const mapped: SupplierItem[] = (res.data || []).map((s: any) => ({
+        id: s.id,
+        code: s.code,
+        name: s.name,
+        country: s.country || 'Nacional / Internacional',
+        materialsSupplied: Array.isArray(s.materialsSupplied) && s.materialsSupplied.length > 0
+          ? s.materialsSupplied
+          : (s.materials && s.materials.length > 0 ? s.materials.map((m: any) => m.name) : ['Polietileno / Polipropileno', 'Masterbatch']),
+        contactPerson: s.contactName || s.contactPerson || 'Contacto Comercial',
+        email: s.email || 'contacto@proveedor.com',
+        phone: s.phone || 'N/A',
+        qualityRating: s.qualityRating || 5,
+        status: s.status || 'ACTIVO'
+      }));
+      setSuppliers(mapped);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSuppliers();
+  }, []);
+
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newSup: SupplierItem = {
-      id: `prov-${Date.now()}`,
-      code: formData.code || `PROV-${Math.floor(100 + Math.random() * 900)}`,
-      name: formData.name,
-      country: formData.country,
-      materialsSupplied: formData.materialsSupplied.split(',').map(s => s.trim()),
-      contactPerson: formData.contactPerson,
-      email: formData.email,
-      phone: formData.phone,
-      qualityRating: 5,
-      status: 'ACTIVO'
-    };
-    setSuppliers([newSup, ...suppliers]);
-    setShowModal(false);
+    try {
+      setIsSaving(true);
+      const code = formData.code || `PROV-${formData.name.substring(0, 4).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
+      
+      await suppliersApi.create({
+        code,
+        name: formData.name,
+        contactName: formData.contactPerson,
+        email: formData.email,
+        phone: formData.phone
+      });
+
+      setShowModal(false);
+      setFormData({
+        code: '',
+        name: '',
+        country: 'Nacional',
+        materialsSupplied: '',
+        contactPerson: '',
+        email: '',
+        phone: ''
+      });
+      await loadSuppliers();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const filtered = suppliers.filter(s =>
@@ -115,6 +108,7 @@ export const SuppliersView: React.FC = () => {
     s.code.toLowerCase().includes(search.toLowerCase()) ||
     s.materialsSupplied.some(m => m.toLowerCase().includes(search.toLowerCase()))
   );
+
 
   return (
     <div className="space-y-6">
@@ -316,15 +310,18 @@ export const SuppliersView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
+                  disabled={isSaving}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold disabled:opacity-50"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-blue-500 hover:bg-blue-400 text-white text-xs font-bold shadow-lg shadow-blue-500/20"
+                  disabled={isSaving}
+                  className="flex items-center gap-2 px-5 py-2 rounded-xl bg-blue-500 hover:bg-blue-400 text-white text-xs font-bold shadow-lg shadow-blue-500/20 disabled:opacity-50"
                 >
-                  Guardar Proveedor
+                  {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  <span>{isSaving ? 'Guardando...' : 'Guardar Proveedor'}</span>
                 </button>
               </div>
             </form>
