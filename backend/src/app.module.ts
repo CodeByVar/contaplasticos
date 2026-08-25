@@ -10,6 +10,8 @@ import { ProductionRequestsModule } from './production-requests/production-reque
 import { ProductionModule } from './production/production.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
 import { MovementsModule } from './movements/movements.module';
+import { AlertsModule } from './alerts/alerts.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -26,6 +28,8 @@ import { MovementsModule } from './movements/movements.module';
     ProductionModule,
     SuppliersModule,
     MovementsModule,
+    AlertsModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [],
