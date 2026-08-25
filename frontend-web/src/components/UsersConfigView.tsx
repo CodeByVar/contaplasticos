@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, 
   Shield, 
@@ -12,21 +12,28 @@ import {
   Mail,
   Clock
 } from 'lucide-react';
-import { mockUsers } from '../data/mockData';
+import { authApi } from '../services/api';
 import type { UserProfile, UserRole } from '../types';
 
 export const UsersConfigView: React.FC = () => {
-  const [users, setUsers] = useState<UserProfile[]>(mockUsers);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [factoryName, setFactoryName] = useState<string>('PlastControl Planta Principal');
   const [siloCapacityDefault, setSiloCapacityDefault] = useState<number>(20000);
   const [cronAlertFrequency, setCronAlertFrequency] = useState<number>(15);
   const [isSaved, setIsSaved] = useState<boolean>(false);
+
+  useEffect(() => {
+    authApi.getUsers().then(res => {
+      setUsers(res.data);
+    });
+  }, []);
 
   const handleSaveConfig = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
   };
+
 
   return (
     <div className="space-y-6">

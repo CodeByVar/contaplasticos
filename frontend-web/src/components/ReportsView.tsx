@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FileSpreadsheet, 
   Download, 
@@ -11,12 +11,28 @@ import {
   Printer,
   FileText
 } from 'lucide-react';
-import { mockDashboardKPIs, mockMaterials, mockScrap, mockEntries } from '../data/mockData';
+import { rawMaterialsApi, scrapApi, entriesApi } from '../services/api';
+import type { RawMaterial, ScrapRecord, BatchEntry } from '../types';
 
 export const ReportsView: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState<string>('Agosto 2026');
   const [reportType, setReportType] = useState<'balance' | 'scrap' | 'entries'>('balance');
   const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [materials, setMaterials] = useState<RawMaterial[]>([]);
+  const [scrapList, setScrapList] = useState<ScrapRecord[]>([]);
+  const [entriesList, setEntriesList] = useState<BatchEntry[]>([]);
+
+  useEffect(() => {
+    Promise.all([
+      rawMaterialsApi.getAll(),
+      scrapApi.getAll(),
+      entriesApi.getAll()
+    ]).then(([matRes, scrRes, entRes]) => {
+      setMaterials(matRes.data);
+      setScrapList(scrRes.data);
+      setEntriesList(entRes.data);
+    });
+  }, []);
 
   const handleExport = (format: 'CSV' | 'PDF') => {
     setIsExporting(true);
@@ -26,17 +42,17 @@ export const ReportsView: React.FC = () => {
       let csvContent = 'data:text/csv;charset=utf-8,';
       if (reportType === 'balance') {
         csvContent += 'Codigo,Materia Prima,Tipo,Silo,Stock Actual (kg),Minimo Alerta (kg),Estado\n';
-        mockMaterials.forEach(m => {
+        materials.forEach(m => {
           csvContent += `"${m.code}","${m.name}","${m.type}","${m.siloLocation}",${m.currentStockKg},${m.minStockKg},"${m.status}"\n`;
         });
       } else if (reportType === 'scrap') {
         csvContent += 'Orden,Linea,Materia Prima Usada (kg),Producto Conforme (kg),Scrap Molino (kg),Desecho (kg),% Merma,Causa\n';
-        mockScrap.forEach(s => {
+        scrapList.forEach(s => {
           csvContent += `"${s.orderNumber}","${s.machineLine}",${s.rawMaterialUsedKg},${s.finishedProductKg},${s.recoverableScrapKg},${s.discardScrapKg},${s.scrapPercentage},"${s.cause}"\n`;
         });
       } else {
         csvContent += 'Codigo Entrada,Materia Prima,Proveedor,Lote,Factura,Silo Destino,Peso Neto (kg)\n';
-        mockEntries.forEach(e => {
+        entriesList.forEach(e => {
           csvContent += `"${e.entryCode}","${e.materialName}","${e.supplierName}","${e.supplierBatch}","${e.invoiceNumber}","${e.siloDestination}",${e.quantityKg}\n`;
         });
       }
@@ -49,6 +65,7 @@ export const ReportsView: React.FC = () => {
       document.body.removeChild(link);
     }, 600);
   };
+
 
   return (
     <div className="space-y-6">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Layers, 
   PackageCheck, 
@@ -11,7 +11,8 @@ import {
   ArrowUpRight, 
   Factory, 
   Sparkles,
-  Shield
+  Shield,
+  Loader2
 } from 'lucide-react';
 import { 
   mockDashboardKPIs, 
@@ -20,7 +21,12 @@ import {
   mockMovements, 
   mockRequests
 } from '../data/mockData';
-import type { UserProfile, ProductionRequest, BatchEntry } from '../types';
+import { 
+  rawMaterialsApi, 
+  entriesApi, 
+  productionRequestsApi 
+} from '../services/api';
+import type { UserProfile, ProductionRequest, BatchEntry, RawMaterial } from '../types';
 
 interface DashboardPrincipalProps {
   currentUser: UserProfile;
@@ -33,8 +39,10 @@ export const DashboardPrincipal: React.FC<DashboardPrincipalProps> = ({
   onOpenRoleModal,
   onNavigateSection
 }) => {
-  const [requests, setRequests] = useState<ProductionRequest[]>(mockRequests);
-  const [entries, setEntries] = useState<BatchEntry[]>(mockEntries);
+  const [requests, setRequests] = useState<ProductionRequest[]>([]);
+  const [entries, setEntries] = useState<BatchEntry[]>([]);
+  const [materials, setMaterials] = useState<RawMaterial[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [showQuickEntryModal, setShowQuickEntryModal] = useState<boolean>(false);
   const [newMaterialName, setNewMaterialName] = useState<string>('Polipropileno (PP)');
   const [newQty, setNewQty] = useState<number>(1000);
@@ -42,36 +50,54 @@ export const DashboardPrincipal: React.FC<DashboardPrincipalProps> = ({
   const [newLot, setNewLot] = useState<string>('PP-2026-0819');
   const [newInvoice, setNewInvoice] = useState<string>('FAC-00261');
 
+  const loadDashboardData = async () => {
+    try {
+      setIsLoading(true);
+      const [reqRes, entRes, matRes] = await Promise.all([
+        productionRequestsApi.getAll(),
+        entriesApi.getAll(),
+        rawMaterialsApi.getAll()
+      ]);
+      setRequests(reqRes.data);
+      setEntries(entRes.data);
+      setMaterials(matRes.data);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
   // Filter low stock materials
-  const lowStockMaterials = mockMaterials.filter(
+  const lowStockMaterials = materials.filter(
     (m) => m.status === 'BAJO' || m.status === 'CRITICO' || m.currentStockKg < m.minStockKg
   );
 
-  const handleApproveRequest = (id: string) => {
-    setRequests(
-      requests.map((r) => (r.id === id ? { ...r, status: 'APROBADA' } : r))
-    );
+  const handleApproveRequest = async (id: string) => {
+    await productionRequestsApi.approve(id);
+    loadDashboardData();
   };
 
-  const handleCreateQuickEntry = (e: React.FormEvent) => {
+  const handleCreateQuickEntry = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newEntry: BatchEntry = {
-      id: `ent-${Date.now()}`,
-      entryCode: `ENT-2026-00${entries.length + 1}`,
-      materialId: 'mat-001',
+    const targetMat = materials[0];
+    await entriesApi.create({
+      materialId: targetMat?.id || 'mat-001',
       materialName: newMaterialName,
       supplierName: newSupplier,
       supplierBatch: newLot,
       quantityKg: Number(newQty),
       invoiceNumber: newInvoice,
-      siloDestination: 'Almacén 1',
+      siloDestination: targetMat?.siloLocation || 'Silo A-01',
       qualityCertificatePassed: true,
-      receivedBy: currentUser.name,
-      createdAt: 'Hace un momento'
-    };
-    setEntries([newEntry, ...entries]);
+      receivedBy: currentUser.name
+    });
     setShowQuickEntryModal(false);
+    loadDashboardData();
   };
+
 
   return (
     <div className="space-y-8 pb-12">

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -15,8 +15,52 @@ export interface UserRecord {
 }
 
 @Injectable()
-export class UsersService {
+export class UsersService implements OnModuleInit {
   constructor(private readonly prisma: PrismaService) {}
+
+  async onModuleInit() {
+    try {
+      const count = await this.prisma.user.count();
+      if (count === 0) {
+        const hashedPassword = await bcrypt.hash('admin123', 10);
+        await this.prisma.user.createMany({
+          data: [
+            {
+              email: 'carlos.mendoza@plastcontrol.com',
+              password: hashedPassword,
+              name: 'Carlos Mendoza',
+              role: 'ADMIN',
+              shift: 'General',
+            },
+            {
+              email: 'jorge.ramirez@plastcontrol.com',
+              password: hashedPassword,
+              name: 'Jorge Ramírez',
+              role: 'ALMACEN',
+              shift: 'Mañana',
+            },
+            {
+              email: 'mario.paredes@plastcontrol.com',
+              password: hashedPassword,
+              name: 'Mario Paredes',
+              role: 'PRODUCCION',
+              shift: 'Tarde',
+            },
+            {
+              email: 'elena.torres@plastcontrol.com',
+              password: hashedPassword,
+              name: 'Elena Torres',
+              role: 'SUPERVISOR',
+              shift: 'Noche',
+            },
+          ],
+        });
+        console.log('[UsersService] Usuarios iniciales sembrados con éxito.');
+      }
+    } catch (err) {
+      console.warn('[UsersService] No se pudo sembrar usuarios:', err);
+    }
+  }
 
   async findAll() {
     return this.prisma.user.findMany({

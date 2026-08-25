@@ -442,6 +442,75 @@ export const alertsApi = {
 };
 
 // -------------------------------------------------------------
+// 6.1. PROVEEDORES (/api/suppliers)
+// -------------------------------------------------------------
+export const suppliersApi = {
+  async getAll(): Promise<{ data: any[]; isLive: boolean }> {
+    return requestWithFallback<any[]>(
+      '/suppliers',
+      { method: 'GET' },
+      () => [
+        {
+          id: 'prov-01',
+          code: 'PROV-BRASKEM',
+          name: 'Braskem Idesa S.A.P.I.',
+          contactName: 'Roberto Viana',
+          email: 'contacto.ventas@braskem.com',
+          phone: '+52 55 5000 8000',
+        },
+        {
+          id: 'prov-02',
+          code: 'PROV-DOW',
+          name: 'Dow Chemical Company',
+          contactName: 'Laura Méndez',
+          email: 'resinas.latam@dow.com',
+          phone: '+1 800 258 2436',
+        },
+        {
+          id: 'prov-03',
+          code: 'PROV-SABIC',
+          name: 'SABIC Petrochemicals',
+          contactName: 'Carlos Andrade',
+          email: 'orders.sabic@sabic.com',
+          phone: '+1 713 555 0199',
+        },
+        {
+          id: 'prov-04',
+          code: 'PROV-PIGMENTOS',
+          name: 'Colorants & Masterbatch Corp',
+          contactName: 'Mariana Duarte',
+          email: 'ventas@colorants.com',
+          phone: '+58 212 555 4321',
+        },
+      ]
+    );
+  },
+
+  async create(data: { code: string; name: string; contactName?: string; email?: string; phone?: string }): Promise<{ data: any; isLive: boolean }> {
+    return requestWithFallback<any>(
+      '/suppliers',
+      {
+        method: 'POST',
+        body: JSON.stringify(data)
+      },
+      () => ({
+        id: `prov-${Date.now()}`,
+        ...data,
+      })
+    );
+  },
+
+  async remove(id: string): Promise<{ data: any; isLive: boolean }> {
+    return requestWithFallback<any>(
+      `/suppliers/${id}`,
+      { method: 'DELETE' },
+      () => ({ success: true })
+    );
+  }
+};
+
+
+// -------------------------------------------------------------
 // 7. KPIS Y DASHBOARD
 // -------------------------------------------------------------
 export const dashboardApi = {
@@ -494,17 +563,40 @@ export const apiConfig = {
   async checkHealth(): Promise<{ online: boolean; url: string }> {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-      const res = await fetch(`${API_BASE_URL}/raw-materials`, {
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      
+      // Probar /health público
+      let res = await fetch(`${API_BASE_URL}/health`, {
         method: 'GET',
         signal: controller.signal
       });
+
+      if (!res.ok) {
+        // Fallback a /raw-materials
+        res = await fetch(`${API_BASE_URL}/raw-materials`, {
+          method: 'GET',
+          signal: controller.signal
+        });
+      }
       clearTimeout(timeoutId);
-      isBackendReachable = res.ok;
-      return { online: res.ok, url: API_BASE_URL };
+
+      const reachable = res.ok || res.status === 401 || res.status === 403;
+      isBackendReachable = reachable;
+
+      // Si el backend responde y no hay token guardado, auto-loguear al admin por defecto
+      if (reachable && !localStorage.getItem('plastcontrol_token')) {
+        try {
+          await authApi.login('carlos.mendoza@plastcontrol.com', 'admin123');
+        } catch {
+          // Ignorar error si el usuario aún no existe
+        }
+      }
+
+      return { online: reachable, url: API_BASE_URL };
     } catch {
       isBackendReachable = false;
       return { online: false, url: API_BASE_URL };
     }
   }
 };
+
