@@ -494,17 +494,40 @@ export const apiConfig = {
   async checkHealth(): Promise<{ online: boolean; url: string }> {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
-      const res = await fetch(`${API_BASE_URL}/raw-materials`, {
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      
+      // Probar /health público
+      let res = await fetch(`${API_BASE_URL}/health`, {
         method: 'GET',
         signal: controller.signal
       });
+
+      if (!res.ok) {
+        // Fallback a /raw-materials
+        res = await fetch(`${API_BASE_URL}/raw-materials`, {
+          method: 'GET',
+          signal: controller.signal
+        });
+      }
       clearTimeout(timeoutId);
-      isBackendReachable = res.ok;
-      return { online: res.ok, url: API_BASE_URL };
+
+      const reachable = res.ok || res.status === 401 || res.status === 403;
+      isBackendReachable = reachable;
+
+      // Si el backend responde y no hay token guardado, auto-loguear al admin por defecto
+      if (reachable && !localStorage.getItem('plastcontrol_token')) {
+        try {
+          await authApi.login('carlos.mendoza@plastcontrol.com', 'admin123');
+        } catch {
+          // Ignorar error si el usuario aún no existe
+        }
+      }
+
+      return { online: reachable, url: API_BASE_URL };
     } catch {
       isBackendReachable = false;
       return { online: false, url: API_BASE_URL };
     }
   }
 };
+
