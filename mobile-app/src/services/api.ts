@@ -1,10 +1,15 @@
 import axios, { isAxiosError } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type {
+  BatchEntryPayload,
   LoginPayload,
   LoginResponse,
+  ProductionRequestPayload,
   RawMaterial,
   RawMaterialFilters,
+  ScrapPayload,
+  StockAlert,
+  Supplier,
   User,
 } from '../types';
 
@@ -79,6 +84,38 @@ export const rawMaterialsApi = {
   async getById(id: string): Promise<RawMaterial> {
     const { data } = await api.get<RawMaterial>(`/raw-materials/${id}`);
     return data;
+  },
+};
+
+export const suppliersApi = {
+  async getAll(): Promise<Supplier[]> {
+    const { data } = await api.get<Supplier[]>('/suppliers');
+    return data;
+  },
+};
+
+export const alertsApi = {
+  async getAll(): Promise<StockAlert[]> {
+    const { data } = await api.get<StockAlert[]>('/alerts');
+    return data;
+  },
+};
+
+export const entriesApi = {
+  async create(payload: BatchEntryPayload): Promise<void> {
+    await api.post('/entries', payload);
+  },
+};
+
+export const productionRequestsApi = {
+  async create(payload: ProductionRequestPayload): Promise<void> {
+    await api.post('/production-requests', payload);
+  },
+};
+
+export const scrapApi = {
+  async create(payload: ScrapPayload): Promise<void> {
+    await api.post('/production/scrap', payload);
   },
 };
 

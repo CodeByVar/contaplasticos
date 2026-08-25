@@ -22,6 +22,7 @@ const quickActions = [
     badgeColor: colors.success,
     title: 'Registrar Entrada',
     description: 'Registro en báscula de materia prima',
+    screen: 'EntryScreen' as const,
   },
   {
     id: 'solicitudes',
@@ -29,6 +30,7 @@ const quickActions = [
     badgeColor: colors.warning,
     title: 'Solicitud de MP',
     description: 'Pedidos para extrusión / inyección',
+    screen: 'ProductionRequestScreen' as const,
   },
   {
     id: 'mermas',
@@ -36,6 +38,7 @@ const quickActions = [
     badgeColor: colors.danger,
     title: 'Consumo y Merma',
     description: 'Registro de consumo desde planta',
+    screen: 'ScrapScreen' as const,
   },
 ];
 
@@ -49,8 +52,12 @@ export default function HomeScreen({ navigation }: Props) {
   const shiftLabel = SHIFT_LABELS[user.shift] ?? user.shift;
 
   const handlePress = (id: string) => {
+    const action = quickActions.find((a) => a.id === id);
+    if (!action) return;
     if (id === 'stock') {
       navigation.navigate('Stock');
+    } else if ('screen' in action && action.screen) {
+      navigation.getParent()?.navigate(action.screen);
     }
   };
 
@@ -92,9 +99,6 @@ export default function HomeScreen({ navigation }: Props) {
             </View>
             <Text style={styles.cardTitle}>{action.title}</Text>
             <Text style={styles.cardDescription}>{action.description}</Text>
-            {action.id !== 'stock' && (
-              <Text style={styles.comingSoon}>Próximamente</Text>
-            )}
           </Pressable>
         ))}
       </View>
@@ -193,11 +197,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     marginTop: spacing.xs,
-  },
-  comingSoon: {
-    fontSize: 11,
-    color: colors.warning,
-    fontWeight: '600',
-    marginTop: spacing.sm,
   },
 });

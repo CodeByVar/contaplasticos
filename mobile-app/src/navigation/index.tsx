@@ -7,6 +7,12 @@ import {
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import {
+  Home,
+  Package,
+  AlertTriangle,
+  User,
+} from 'lucide-react-native';
 
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../theme';
@@ -17,6 +23,9 @@ import HomeScreen from '../screens/HomeScreen';
 import StockScreen from '../screens/StockScreen';
 import AlertsScreen from '../screens/AlertsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import EntryScreen from '../screens/EntryScreen';
+import ProductionRequestScreen from '../screens/ProductionRequestScreen';
+import ScrapScreen from '../screens/ScrapScreen';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const MainTabs = createBottomTabNavigator<MainTabParamList>();
@@ -50,22 +59,42 @@ function MainTabNavigator() {
       <MainTabs.Screen
         name="Inicio"
         component={HomeScreen}
-        options={{ title: 'PlastControl' }}
+        options={{
+          title: 'PlastControl',
+          tabBarIcon: ({ color, size }) => (
+            <Home size={size} color={color} />
+          ),
+        }}
       />
       <MainTabs.Screen
         name="Stock"
         component={StockScreen}
-        options={{ title: 'Stock en Silos' }}
+        options={{
+          title: 'Stock en Silos',
+          tabBarIcon: ({ color, size }) => (
+            <Package size={size} color={color} />
+          ),
+        }}
       />
       <MainTabs.Screen
         name="Alertas"
         component={AlertsScreen}
-        options={{ title: 'Alertas de Stock' }}
+        options={{
+          title: 'Alertas de Stock',
+          tabBarIcon: ({ color, size }) => (
+            <AlertTriangle size={size} color={color} />
+          ),
+        }}
       />
       <MainTabs.Screen
         name="Perfil"
         component={ProfileScreen}
-        options={{ title: 'Mi Perfil' }}
+        options={{
+          title: 'Mi Perfil',
+          tabBarIcon: ({ color, size }) => (
+            <User size={size} color={color} />
+          ),
+        }}
       />
     </MainTabs.Navigator>
   );
@@ -93,7 +122,42 @@ export function AppNavigator() {
     <NavigationContainer theme={navTheme}>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
         {user ? (
-          <RootStack.Screen name="Main" component={MainTabNavigator} />
+          <>
+            <RootStack.Screen name="Main" component={MainTabNavigator} />
+            <RootStack.Screen
+              name="EntryScreen"
+              component={EntryScreen}
+              options={{
+                headerShown: true,
+                headerStyle: { backgroundColor: colors.surface },
+                headerTitleStyle: { color: colors.textPrimary, fontWeight: '700' },
+                headerTintColor: colors.primary,
+                title: 'Registrar Entrada',
+              }}
+            />
+            <RootStack.Screen
+              name="ProductionRequestScreen"
+              component={ProductionRequestScreen}
+              options={{
+                headerShown: true,
+                headerStyle: { backgroundColor: colors.surface },
+                headerTitleStyle: { color: colors.textPrimary, fontWeight: '700' },
+                headerTintColor: colors.primary,
+                title: 'Solicitud de MP',
+              }}
+            />
+            <RootStack.Screen
+              name="ScrapScreen"
+              component={ScrapScreen}
+              options={{
+                headerShown: true,
+                headerStyle: { backgroundColor: colors.surface },
+                headerTitleStyle: { color: colors.textPrimary, fontWeight: '700' },
+                headerTintColor: colors.primary,
+                title: 'Consumo y Merma',
+              }}
+            />
+          </>
         ) : (
           <RootStack.Screen name="Login" component={LoginScreen} />
         )}
