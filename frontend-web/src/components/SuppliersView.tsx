@@ -77,14 +77,17 @@ export const SuppliersView: React.FC = () => {
     e.preventDefault();
     try {
       setIsSaving(true);
-      const code = formData.code || `PROV-${formData.name.substring(0, 4).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
-      
+      const cleanName = formData.name.trim();
+      const code = formData.code.trim() || `PROV-${cleanName.substring(0, 4).toUpperCase().replace(/[^A-Z0-9]/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`;
+      const cleanEmail = formData.email.trim();
+      const email = cleanEmail.includes('@') ? cleanEmail : `contacto@${cleanName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'proveedor'}.com`;
+
       await suppliersApi.create({
         code,
-        name: formData.name,
-        contactName: formData.contactPerson,
-        email: formData.email,
-        phone: formData.phone
+        name: cleanName,
+        contactName: formData.contactPerson.trim() || 'Contacto Comercial',
+        email: email,
+        phone: formData.phone.trim() || '+591 00000000'
       });
 
       setShowModal(false);
@@ -98,6 +101,8 @@ export const SuppliersView: React.FC = () => {
         phone: ''
       });
       await loadSuppliers();
+    } catch (err) {
+      console.error('Error al crear proveedor:', err);
     } finally {
       setIsSaving(false);
     }
