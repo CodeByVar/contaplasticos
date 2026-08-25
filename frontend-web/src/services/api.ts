@@ -150,7 +150,7 @@ export const rawMaterialsApi = {
       query = `?${q.toString()}`;
     }
 
-    return requestWithFallback<RawMaterial[]>(
+    const res = await requestWithFallback<any[]>(
       `/raw-materials${query}`,
       { method: 'GET' },
       () => {
@@ -168,6 +168,27 @@ export const rawMaterialsApi = {
         return result;
       }
     );
+
+    const mapped: RawMaterial[] = (res.data || []).map((m: any) => ({
+      id: m.id,
+      code: m.code,
+      name: m.name,
+      type: m.type || 'RESINA',
+      category: m.category || 'EXTRUSION',
+      density: Number(m.density) || 0.95,
+      meltFlowIndex: Number(m.meltFlowIndex) || 2.0,
+      unit: m.unit || 'kg',
+      currentStockKg: Number(m.currentStockKg) || 0,
+      minStockKg: Number(m.minStockKg) || 1000,
+      maxCapacityKg: Number(m.maxCapacityKg) || 20000,
+      siloLocation: m.siloLocation || 'Silo A-01',
+      status: m.status || (m.currentStockKg < m.minStockKg ? 'BAJO' : 'OPTIMO'),
+      colorCode: m.colorCode || (m.type === 'MASTERBATCH' ? '#ec4899' : m.type === 'RECUPERADO' ? '#10b981' : '#06b6d4'),
+      supplier: m.supplier?.name || m.supplier || 'Petroquímica Homologada',
+      lastUpdated: 'En línea (BD)'
+    }));
+
+    return { data: mapped, isLive: res.isLive, error: res.error };
   },
 
   async getById(id: string): Promise<{ data: RawMaterial | null; isLive: boolean }> {
@@ -179,27 +200,40 @@ export const rawMaterialsApi = {
   },
 
   async create(material: Partial<RawMaterial>): Promise<{ data: RawMaterial; isLive: boolean }> {
+    const payload = {
+      code: material.code || `MP-${Math.floor(100 + Math.random() * 900)}`,
+      name: material.name || 'Nueva Resina',
+      type: material.type || 'RESINA',
+      category: material.category || 'EXTRUSION',
+      density: Number(material.density) || 0.95,
+      meltFlowIndex: Number(material.meltFlowIndex) || 2.0,
+      unit: material.unit?.toUpperCase() || 'KG',
+      minStockKg: Number(material.minStockKg) || 1000,
+      maxCapacityKg: Number(material.maxCapacityKg) || 20000,
+      siloLocation: material.siloLocation || 'Silo A-01'
+    };
+
     return requestWithFallback<RawMaterial>(
       '/raw-materials',
       {
         method: 'POST',
-        body: JSON.stringify(material)
+        body: JSON.stringify(payload)
       },
       () => {
         const newMat: RawMaterial = {
           id: `mat-${Date.now()}`,
-          code: material.code || `MP-${Math.floor(100 + Math.random() * 900)}`,
-          name: material.name || 'Nueva Resina',
-          type: material.type || 'RESINA',
-          category: material.category || 'EXTRUSION',
-          density: material.density || 0.95,
-          meltFlowIndex: material.meltFlowIndex || 2.0,
-          unit: material.unit || 'kg',
+          code: payload.code,
+          name: payload.name,
+          type: payload.type as any,
+          category: payload.category as any,
+          density: payload.density,
+          meltFlowIndex: payload.meltFlowIndex,
+          unit: payload.unit,
           currentStockKg: material.currentStockKg || 0,
-          minStockKg: material.minStockKg || 1000,
-          maxCapacityKg: material.maxCapacityKg || 10000,
-          siloLocation: material.siloLocation || 'Silo A-01',
-          status: (material.currentStockKg || 0) < (material.minStockKg || 1000) ? 'BAJO' : 'OPTIMO',
+          minStockKg: payload.minStockKg,
+          maxCapacityKg: payload.maxCapacityKg,
+          siloLocation: payload.siloLocation,
+          status: (material.currentStockKg || 0) < payload.minStockKg ? 'BAJO' : 'OPTIMO',
           colorCode: material.colorCode || '#06b6d4',
           supplier: material.supplier || 'Petroquímica Nacional',
           lastUpdated: 'Recién creado'
@@ -209,6 +243,7 @@ export const rawMaterialsApi = {
       }
     );
   },
+
 
   async updateStock(id: string, newStockKg: number): Promise<{ success: boolean; isLive: boolean }> {
     return requestWithFallback<{ success: boolean }>(
