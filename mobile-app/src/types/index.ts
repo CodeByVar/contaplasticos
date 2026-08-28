@@ -110,17 +110,74 @@ export interface ScrapPayload {
   cause: ScrapCause;
 }
 
+export interface ProductionRequestItem {
+  id: string;
+  productionRequestId: string;
+  materialId: string;
+  quantityKg: number;
+  material: RawMaterial;
+}
+
+export interface ProductionRequest {
+  id: string;
+  orderCode: string;
+  line: string;
+  processType: ProcessType;
+  targetProduct: string;
+  status: RequestStatus;
+  createdAt: string;
+  updatedAt: string;
+  requestedById: string;
+  requestedBy: {
+    id: string;
+    name: string;
+  };
+  materials: ProductionRequestItem[];
+}
+
+export interface Movement {
+  id: string;
+  type: MovementType;
+  quantityKg: number;
+  materialId: string;
+  material: {
+    id: string;
+    code: string;
+    name: string;
+  };
+  userId: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: UserRole;
+  };
+  productionRequestId?: string | null;
+  productionRequest?: {
+    id: string;
+    orderCode: string;
+    status: RequestStatus;
+  } | null;
+  notes?: string | null;
+  createdAt: string;
+}
+
+export interface MovementFilters {
+  type?: MovementType;
+  materialId?: string;
+}
+
 export type RootStackParamList = {
   Login: undefined;
   Main: undefined;
   EntryScreen: undefined;
-  ProductionRequestScreen: undefined;
-  ScrapScreen: undefined;
+  RequestsScreen: undefined;
 };
 
 export type MainTabParamList = {
   Inicio: undefined;
   Stock: undefined;
+  Movimientos: undefined;
   Alertas: undefined;
   Perfil: undefined;
 };
@@ -136,7 +193,23 @@ export const SHIFT_LABELS: Record<string, string> = {
   TURNO_MANANA: 'Turno Mañana',
   TURNO_TARDE: 'Turno Tarde',
   TURNO_NOCHE: 'Turno Noche',
+  MANANA: 'Turno Mañana',
+  TARDE: 'Turno Tarde',
+  NOCHE: 'Turno Noche',
+  MAÑANA: 'Turno Mañana',
+  General: 'Turno General',
+  'Mañana': 'Turno Mañana',
+  'Tarde': 'Turno Tarde',
+  'Noche': 'Turno Noche',
 };
+
+export function shiftLabel(shift?: string | null): string | null {
+  if (!shift) return null;
+  const key = shift.trim().toUpperCase();
+  if (SHIFT_LABELS[key]) return SHIFT_LABELS[key];
+  if (SHIFT_LABELS[shift]) return SHIFT_LABELS[shift];
+  return shift;
+}
 
 export const MATERIAL_TYPE_LABELS: Record<MaterialType, string> = {
   RESINA: 'Resina',

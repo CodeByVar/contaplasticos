@@ -4,10 +4,11 @@ import type {
   BatchEntryPayload,
   LoginPayload,
   LoginResponse,
-  ProductionRequestPayload,
+  Movement,
+  MovementFilters,
+  ProductionRequest,
   RawMaterial,
   RawMaterialFilters,
-  ScrapPayload,
   StockAlert,
   Supplier,
   User,
@@ -19,8 +20,12 @@ import type {
  * - Emulador Android Studio: http://10.0.2.2:3000
  * - Dispositivo físico (Expo Go): http://<TU_IP_LOCAL>:3000
  *   (ejecuta `ipconfig` y usa tu IPv4, ej: http://192.168.1.10:3000)
+ * - Web / Vercel: usa la URL pública del backend, ej: https://api.plastcontrol.com
+ *
+ * Se puede sobreescribir con una variable de entorno (EXPO_PUBLIC_API_URL)
+ * para la compilación web/despliegue sin tocar el código.
  */
-export const API_BASE_URL = 'http://10.0.2.2:3000';
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:3000';
 
 const ACCESS_TOKEN_KEY = '@plastcontrol/access_token';
 const REFRESH_TOKEN_KEY = '@plastcontrol/refresh_token';
@@ -108,14 +113,25 @@ export const entriesApi = {
 };
 
 export const productionRequestsApi = {
-  async create(payload: ProductionRequestPayload): Promise<void> {
-    await api.post('/production-requests', payload);
+  async getAll(): Promise<ProductionRequest[]> {
+    const { data } = await api.get<ProductionRequest[]>('/production-requests');
+    return data;
+  },
+
+  async approve(id: string): Promise<ProductionRequest> {
+    const { data } = await api.patch<ProductionRequest>(`/production-requests/${id}/approve`);
+    return data;
   },
 };
 
-export const scrapApi = {
-  async create(payload: ScrapPayload): Promise<void> {
-    await api.post('/production/scrap', payload);
+export const movementsApi = {
+  async getAll(filters: MovementFilters = {}): Promise<Movement[]> {
+    const params: Record<string, string> = {};
+    if (filters.type) params.type = filters.type;
+    if (filters.materialId) params.materialId = filters.materialId;
+
+    const { data } = await api.get<Movement[]>('/movements', { params });
+    return data;
   },
 };
 

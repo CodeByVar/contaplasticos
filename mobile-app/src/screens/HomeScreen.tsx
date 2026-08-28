@@ -1,63 +1,76 @@
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { CompositeNavigationProp } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { useAuth } from '../context/AuthContext';
 import { colors, radius, spacing } from '../theme';
-import { ROLE_LABELS, SHIFT_LABELS, type MainTabParamList } from '../types';
+import { ROLE_LABELS, shiftLabel, type MainTabParamList, type RootStackParamList } from '../types';
 
-type Props = NativeStackScreenProps<MainTabParamList, 'Inicio'>;
+type Navigation = CompositeNavigationProp<
+  BottomTabNavigationProp<MainTabParamList, 'Inicio'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 const quickActions = [
-  {
-    id: 'stock',
-    badge: 'S',
-    badgeColor: colors.primary,
-    title: 'Stock en Silos',
-    description: 'Consulta de inventario por materia prima',
-  },
   {
     id: 'entradas',
     badge: 'E',
     badgeColor: colors.success,
     title: 'Registrar Entrada',
-    description: 'Registro en báscula de materia prima',
-    screen: 'EntryScreen' as const,
+    description: 'Entradas de materia prima en báscula',
   },
   {
     id: 'solicitudes',
     badge: 'P',
     badgeColor: colors.warning,
-    title: 'Solicitud de MP',
-    description: 'Pedidos para extrusión / inyección',
-    screen: 'ProductionRequestScreen' as const,
+    title: 'Solicitudes y Despacho',
+    description: 'Aprobar y despachar a producción',
   },
   {
-    id: 'mermas',
+    id: 'movimientos',
     badge: 'M',
+    badgeColor: colors.primary,
+    title: 'Movimientos',
+    description: 'Historial de entradas y salidas',
+  },
+  {
+    id: 'alertas',
+    badge: 'A',
     badgeColor: colors.danger,
-    title: 'Consumo y Merma',
-    description: 'Registro de consumo desde planta',
-    screen: 'ScrapScreen' as const,
+    title: 'Alertas de Stock',
+    description: 'Stock bajo y crítico',
   },
 ];
 
-export default function HomeScreen({ navigation }: Props) {
+export default function HomeScreen() {
   const { user } = useAuth();
+  const navigation = useNavigation<Navigation>();
 
   if (!user) return null;
 
   const firstName = user.name.split(' ')[0];
   const roleLabel = ROLE_LABELS[user.role] ?? user.role;
-  const shiftLabel = SHIFT_LABELS[user.shift] ?? user.shift;
+  const shift = shiftLabel(user.shift);
 
   const handlePress = (id: string) => {
-    const action = quickActions.find((a) => a.id === id);
-    if (!action) return;
-    if (id === 'stock') {
-      navigation.navigate('Stock');
-    } else if ('screen' in action && action.screen) {
-      navigation.getParent()?.navigate(action.screen);
+    switch (id) {
+      case 'entradas':
+        navigation.navigate('EntryScreen');
+        break;
+      case 'solicitudes':
+        navigation.navigate('RequestsScreen');
+        break;
+      case 'movimientos':
+        navigation.navigate('Movimientos');
+        break;
+      case 'alertas':
+        navigation.navigate('Alertas');
+        break;
+      default:
+        navigation.navigate('Stock');
     }
   };
 
@@ -73,9 +86,11 @@ export default function HomeScreen({ navigation }: Props) {
         <View style={[styles.chip, styles.chipPrimary]}>
           <Text style={styles.chipTextPrimary}>{roleLabel}</Text>
         </View>
-        <View style={styles.chip}>
-          <Text style={styles.chipText}>{shiftLabel}</Text>
-        </View>
+        {shift && (
+          <View style={styles.chip}>
+            <Text style={styles.chipText}>{shift}</Text>
+          </View>
+        )}
       </View>
 
       <Text style={styles.sectionTitle}>Accesos rápidos</Text>
