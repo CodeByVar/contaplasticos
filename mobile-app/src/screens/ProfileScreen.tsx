@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '../context/AuthContext';
 import { colors, radius, spacing } from '../theme';
-import { ROLE_LABELS, SHIFT_LABELS } from '../types';
+import { ROLE_LABELS, shiftLabel } from '../types';
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
@@ -13,7 +13,7 @@ export default function ProfileScreen() {
   if (!user) return null;
 
   const roleLabel = ROLE_LABELS[user.role] ?? user.role;
-  const shiftLabel = SHIFT_LABELS[user.shift] ?? user.shift;
+  const shift = shiftLabel(user.shift);
 
   const confirmSignOut = () => {
     Alert.alert('Cerrar sesión', '¿Seguro que quieres salir de tu cuenta?', [
@@ -43,7 +43,7 @@ export default function ProfileScreen() {
             <Text style={styles.chipTextPrimary}>{roleLabel}</Text>
           </View>
           <View style={styles.chip}>
-            <Text style={styles.chipText}>{shiftLabel}</Text>
+            <Text style={styles.chipText}>{shift ?? 'Turno no definido'}</Text>
           </View>
         </View>
       </View>
@@ -51,7 +51,7 @@ export default function ProfileScreen() {
       <View style={styles.infoCard}>
         <InfoRow label="ID de usuario" value={user.id} />
         <InfoRow label="Rol" value={roleLabel} />
-        <InfoRow label="Turno" value={shiftLabel} isLast />
+        <InfoRow label="Turno" value={shift ?? 'No definido'} isLast />
       </View>
 
       <Pressable

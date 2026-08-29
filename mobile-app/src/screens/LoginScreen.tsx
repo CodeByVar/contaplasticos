@@ -67,14 +67,14 @@ export default function LoginScreen() {
 
           <Text style={styles.title}>PlastControl</Text>
           <Text style={styles.subtitle}>
-            Control de materia prima para fábrica de plásticos
+            Almacén · Control de materia prima para fábrica de plásticos
           </Text>
 
           <View style={styles.formCard}>
             <Text style={styles.label}>Correo electrónico</Text>
             <TextInput
               style={styles.input}
-              placeholder="admin@plastcontrol.com"
+              placeholder="jorge.ramirez@plastcontrol.com"
               placeholderTextColor={colors.textMuted}
               value={email}
               onChangeText={setEmail}
@@ -131,9 +131,9 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.hintCard}>
-            <Text style={styles.hintTitle}>Credenciales de prueba (API.md)</Text>
-            <Text style={styles.hintText}>admin@plastcontrol.com</Text>
-            <Text style={styles.hintText}>password123</Text>
+            <Text style={styles.hintTitle}>Acceso de almacén (backend)</Text>
+            <Text style={styles.hintText}>jorge.ramirez@plastcontrol.com</Text>
+            <Text style={styles.hintText}>admin123</Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
