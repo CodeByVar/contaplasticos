@@ -60,12 +60,13 @@ export const ProductionOrdersView: React.FC = () => {
     e.preventDefault();
     const selMat = materials.find(m => m.id === formState.materialId);
     await productionRequestsApi.create({
-      orderNumber: formState.orderNumber,
+      orderCode: formState.orderNumber,
       line: formState.line,
       processType: formState.processType,
-      productName: formState.productName,
+      targetProduct: formState.productName,
       requiredMaterials: [
         {
+          materialId: selMat?.id || '',
           materialName: selMat?.name || 'Polímero',
           quantityKg: Number(formState.quantityKg)
         }

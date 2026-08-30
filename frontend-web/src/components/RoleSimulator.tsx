@@ -47,10 +47,10 @@ export const RoleSimulator: React.FC<RoleSimulatorProps> = ({
       desc: 'Solicitud de mezclas de resina y aditivos para máquinas de extrusión/inyección y registro de mermas.',
       permissions: ['Crear solicitudes de materia prima', 'Registrar scrap recuperable y purgas', 'Monitorear stock disponible', 'Consultar recetas de producción']
     },
-    GERENCIA: {
-      title: 'Gerencia de Operaciones',
-      desc: 'Visualización de KPIs de rendimiento, indicadores de mermas y auditorías.',
-      permissions: ['Dashboard ejecutivo de KPIs', 'Descarga de balances mensuales PDF/Excel', 'Visualización de alertas de stock']
+    SUPERVISOR: {
+      title: 'Supervisión de Operaciones',
+      desc: 'Visualización de KPIs de rendimiento, indicadores de mermas, auditorías y seguimiento operativo global.',
+      permissions: ['Dashboard ejecutivo de KPIs', 'Descarga de balances mensuales PDF/Excel', 'Visualización de alertas de stock', 'Monitoreo de desempeño por turno']
     }
   };
 

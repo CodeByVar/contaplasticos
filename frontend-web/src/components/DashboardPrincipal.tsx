@@ -24,7 +24,8 @@ import {
 import { 
   rawMaterialsApi, 
   entriesApi, 
-  productionRequestsApi 
+  productionRequestsApi,
+  dashboardApi
 } from '../services/api';
 import type { UserProfile, ProductionRequest, BatchEntry, RawMaterial } from '../types';
 
@@ -42,6 +43,7 @@ export const DashboardPrincipal: React.FC<DashboardPrincipalProps> = ({
   const [requests, setRequests] = useState<ProductionRequest[]>([]);
   const [entries, setEntries] = useState<BatchEntry[]>([]);
   const [materials, setMaterials] = useState<RawMaterial[]>([]);
+  const [kpis, setKpis] = useState(mockDashboardKPIs);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [showQuickEntryModal, setShowQuickEntryModal] = useState<boolean>(false);
   const [newMaterialName, setNewMaterialName] = useState<string>('Polipropileno (PP)');
@@ -53,14 +55,16 @@ export const DashboardPrincipal: React.FC<DashboardPrincipalProps> = ({
   const loadDashboardData = async () => {
     try {
       setIsLoading(true);
-      const [reqRes, entRes, matRes] = await Promise.all([
+      const [reqRes, entRes, matRes, kpisRes] = await Promise.all([
         productionRequestsApi.getAll(),
         entriesApi.getAll(),
-        rawMaterialsApi.getAll()
+        rawMaterialsApi.getAll(),
+        dashboardApi.getKPIs()
       ]);
       setRequests(reqRes.data);
       setEntries(entRes.data);
       setMaterials(matRes.data);
+      setKpis(kpisRes.data ?? mockDashboardKPIs);
     } finally {
       setIsLoading(false);
     }
@@ -74,6 +78,8 @@ export const DashboardPrincipal: React.FC<DashboardPrincipalProps> = ({
   const lowStockMaterials = materials.filter(
     (m) => m.status === 'BAJO' || m.status === 'CRITICO' || m.currentStockKg < m.minStockKg
   );
+
+  const formatNumber = (value: number) => new Intl.NumberFormat('es-MX').format(Math.round(value));
 
   const handleApproveRequest = async (id: string) => {
     await productionRequestsApi.approve(id);
@@ -185,7 +191,7 @@ export const DashboardPrincipal: React.FC<DashboardPrincipalProps> = ({
               </div>
             </div>
             <div className="text-2xl font-black text-white font-mono tracking-tight">
-              {mockDashboardKPIs.totalMateriaPrimaKg.toLocaleString()} <span className="text-xs font-semibold text-cyan-400">kg</span>
+              {formatNumber(kpis.totalMateriaPrimaKg)} <span className="text-xs font-semibold text-cyan-400">kg</span>
             </div>
             <div className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-400">
               <span className="text-emerald-400 font-semibold flex items-center">
@@ -206,7 +212,7 @@ export const DashboardPrincipal: React.FC<DashboardPrincipalProps> = ({
               </div>
             </div>
             <div className="text-2xl font-black text-white font-mono tracking-tight">
-              {mockDashboardKPIs.stockDisponibleKg.toLocaleString()} <span className="text-xs font-semibold text-emerald-400">kg</span>
+              {formatNumber(kpis.stockDisponibleKg)} <span className="text-xs font-semibold text-emerald-400">kg</span>
             </div>
             <div className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-400">
               <span className="text-emerald-400 font-semibold">78.8%</span>
@@ -225,7 +231,7 @@ export const DashboardPrincipal: React.FC<DashboardPrincipalProps> = ({
               </div>
             </div>
             <div className="text-2xl font-black text-amber-400 font-mono tracking-tight">
-              {mockDashboardKPIs.materialesStockBajoCount} <span className="text-xs font-semibold text-slate-300">materiales</span>
+              {kpis.materialesStockBajoCount} <span className="text-xs font-semibold text-slate-300">materiales</span>
             </div>
             <div className="mt-2 flex items-center gap-1.5 text-[11px] text-amber-300">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
@@ -244,7 +250,7 @@ export const DashboardPrincipal: React.FC<DashboardPrincipalProps> = ({
               </div>
             </div>
             <div className="text-2xl font-black text-white font-mono tracking-tight">
-              {mockDashboardKPIs.materiaPrimaRecibidaKg.toLocaleString()} <span className="text-xs font-semibold text-blue-400">kg</span>
+              {formatNumber(kpis.materiaPrimaRecibidaKg)} <span className="text-xs font-semibold text-blue-400">kg</span>
             </div>
             <div className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-400">
               <span className="text-cyan-400 font-semibold">+3 entradas</span>
@@ -263,7 +269,7 @@ export const DashboardPrincipal: React.FC<DashboardPrincipalProps> = ({
               </div>
             </div>
             <div className="text-2xl font-black text-white font-mono tracking-tight">
-              {mockDashboardKPIs.consumoDelMesKg.toLocaleString()} <span className="text-xs font-semibold text-purple-400">kg</span>
+              {formatNumber(kpis.consumoDelMesKg)} <span className="text-xs font-semibold text-purple-400">kg</span>
             </div>
             <div className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-400">
               <span className="text-purple-400 font-semibold">Extrusión / Iny.</span>

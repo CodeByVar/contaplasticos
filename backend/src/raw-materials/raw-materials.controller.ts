@@ -51,6 +51,12 @@ export class RawMaterialsController {
     return this.rawMaterialsService.update(id, body);
   }
 
+  @Patch(':id/stock')
+  @Roles('ADMIN', 'ALMACEN')
+  updateStock(@Param('id') id: string, @Body() body: UpdateRawMaterialDto) {
+    return this.rawMaterialsService.update(id, { currentStockKg: body.currentStockKg });
+  }
+
   @Delete(':id')
   @Roles('ADMIN')
   remove(@Param('id') id: string) {

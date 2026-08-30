@@ -350,25 +350,33 @@ export const mockUsers: UserProfile[] = [
   {
     id: 'u-01',
     name: 'Carlos Mendoza',
-    email: 'admin@plastcontrol.com',
+    email: 'carlos.mendoza@plastcontrol.com',
     role: 'ADMIN',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     shift: 'Administrador General'
   },
   {
     id: 'u-02',
-    name: 'Rodrigo Alarcón',
-    email: 'almacen@plastcontrol.com',
+    name: 'Jorge Ramírez',
+    email: 'jorge.ramirez@plastcontrol.com',
     role: 'ALMACEN',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
     shift: 'Encargado de Almacén'
   },
   {
     id: 'u-03',
-    name: 'Ing. Pedro Ramos',
-    email: 'produccion@plastcontrol.com',
+    name: 'Mario Paredes',
+    email: 'mario.paredes@plastcontrol.com',
     role: 'PRODUCCION',
     avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
     shift: 'Encargado de Producción'
+  },
+  {
+    id: 'u-04',
+    name: 'Elena Torres',
+    email: 'elena.torres@plastcontrol.com',
+    role: 'SUPERVISOR',
+    avatar: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=150&auto=format&fit=crop&q=80',
+    shift: 'Supervisión Operativa'
   }
 ];

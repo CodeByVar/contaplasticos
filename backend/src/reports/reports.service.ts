@@ -46,6 +46,42 @@ export class ReportsService {
     };
   }
 
+  async dashboardKpis() {
+    const [materials, received, consumed, scrap] = await Promise.all([
+      this.prisma.rawMaterial.findMany({
+        select: { currentStockKg: true, minStockKg: true, status: true },
+      }),
+      this.prisma.batchEntry.aggregate({
+        _sum: { quantityKg: true },
+      }),
+      this.prisma.stockMovement.aggregate({
+        where: { type: 'CONSUMO' },
+        _sum: { quantityKg: true },
+      }),
+      this.prisma.scrapRecord.aggregate({
+        _sum: { recoverableScrapKg: true, discardScrapKg: true },
+      }),
+    ]);
+
+    const totalMateriaPrimaKg = materials.reduce((sum, material) => sum + Number(material.currentStockKg || 0), 0);
+    const materialesStockBajoCount = materials.filter(
+      (material) => material.status === 'BAJO' || material.status === 'CRITICO' || Number(material.currentStockKg || 0) <= Number(material.minStockKg || 0),
+    ).length;
+    const stockDisponibleKg = Math.max(totalMateriaPrimaKg * 0.8, 0);
+    const materiaPrimaRecibidaKg = Number(received._sum.quantityKg || 0);
+    const consumoDelMesKg = Number(consumed._sum.quantityKg || 0);
+    const mermaDelMesKg = Number(scrap._sum.recoverableScrapKg || 0) + Number(scrap._sum.discardScrapKg || 0);
+
+    return {
+      totalMateriaPrimaKg,
+      stockDisponibleKg,
+      materialesStockBajoCount,
+      materiaPrimaRecibidaKg,
+      consumoDelMesKg,
+      mermaDelMesKg,
+    };
+  }
+
   async monthlyBalanceExcel(month: number, year: number) {
     const report = await this.monthlyBalance(month, year);
     const workbook = new ExcelJS.Workbook();

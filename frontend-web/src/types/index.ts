@@ -43,6 +43,7 @@ export interface ProductionRequest {
   processType: ProcessCategory;
   productName: string;
   requiredMaterials: {
+    materialId?: string;
     materialName: string;
     quantityKg: number;
   }[];
@@ -75,7 +76,7 @@ export interface StockAlert {
   timestamp: string;
 }
 
-export type UserRole = 'ADMIN' | 'ALMACEN' | 'PRODUCCION' | 'GERENCIA';
+export type UserRole = 'ADMIN' | 'ALMACEN' | 'PRODUCCION' | 'SUPERVISOR';
 
 export interface UserProfile {
   id: string;
