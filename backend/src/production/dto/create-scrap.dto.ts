@@ -1,5 +1,5 @@
-import { Type } from 'class-transformer';
-import { IsEnum, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 export enum ScrapCause {
   ARRANQUE_MAQUINA = 'ARRANQUE_MAQUINA',
@@ -8,12 +8,22 @@ export enum ScrapCause {
   DESCALIBRACION = 'DESCALIBRACION',
 }
 
+const normalizeCause = (value: string): string => {
+  if (!value) return value;
+  const normalized = value.toString().trim().toUpperCase();
+  if (normalized.includes('ARRANQUE')) return ScrapCause.ARRANQUE_MAQUINA;
+  if (normalized.includes('CAMBIO') || normalized.includes('COLOR')) return ScrapCause.CAMBIO_COLOR;
+  if (normalized.includes('ATASCO')) return ScrapCause.ATASCO;
+  if (normalized.includes('DESCALIB') || normalized.includes('CALIB')) return ScrapCause.DESCALIBRACION;
+  return normalized.replace(/\s+/g, '_');
+};
+
 export class CreateScrapDto {
-  @IsUUID()
+  @IsString()
   productionOrderId!: string;
 
   @IsOptional()
-  @IsUUID()
+  @IsString()
   materialId?: string;
 
   @Type(() => Number)
@@ -36,8 +46,9 @@ export class CreateScrapDto {
   @Min(0)
   scrapDiscardKg!: number;
 
-  @IsEnum(ScrapCause)
-  cause!: ScrapCause;
+  @Transform(({ value }) => normalizeCause(value))
+  @IsString()
+  cause!: string;
 
   @IsOptional()
   @IsString()

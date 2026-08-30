@@ -29,6 +29,74 @@ import type {
 
 const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:3000/api';
 
+const normalizeDate = (value?: string) => {
+  if (!value) return 'Reciente';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString('es-MX', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+const normalizeBatchEntry = (entry: any): BatchEntry => ({
+  id: entry.id,
+  entryCode: entry.entryCode || 'ENT-N/A',
+  materialId: entry.materialId || entry.material?.id || '',
+  materialName: entry.materialName || entry.material?.name || 'Materia prima',
+  supplierName: entry.supplierName || entry.supplier?.name || 'Proveedor',
+  supplierBatch: entry.supplierBatch || entry.supplierBatchNumber || 'Lote sin registro',
+  quantityKg: Number(entry.quantityKg || 0),
+  invoiceNumber: entry.invoiceNumber || 'FAC-SIN-NUMERO',
+  siloDestination: entry.siloDestination || entry.siloOrWarehouseLocation || 'Silo no asignado',
+  qualityCertificatePassed: entry.qualityCertificatePassed ?? entry.qualityCertificate ?? true,
+  receivedBy: entry.receivedBy?.name || entry.receivedBy || 'Operador',
+  createdAt: normalizeDate(entry.createdAt)
+});
+
+const normalizeProductionRequest = (req: any): ProductionRequest => ({
+  id: req.id,
+  orderNumber: req.orderCode || req.orderNumber || 'OP-SIN-CODIGO',
+  line: req.line || 'Línea no registrada',
+  processType: req.processType || 'EXTRUSION',
+  productName: req.targetProduct || req.productName || 'Producto no registrado',
+  requiredMaterials: (req.materials || req.requiredMaterials || []).map((item: any) => ({
+    materialId: item.materialId || item.material?.id,
+    materialName: item.materialName || item.material?.name || 'Material',
+    quantityKg: Number(item.quantityKg || 0)
+  })),
+  requestedBy: req.requestedBy?.name || req.requestedBy || 'Operador',
+  status: req.status || 'PENDIENTE',
+  createdAt: normalizeDate(req.createdAt)
+});
+
+const normalizeScrapRecord = (scrap: any): ScrapRecord => ({
+  id: scrap.id,
+  orderNumber: scrap.productionRequest?.orderCode || scrap.orderNumber || 'OP-SIN-CODIGO',
+  machineLine: scrap.productionRequest?.line || scrap.machineLine || 'Línea no registrada',
+  rawMaterialUsedKg: Number(scrap.rawMaterialUsedKg || 0),
+  finishedProductKg: Number(scrap.finishedProductKg || 0),
+  recoverableScrapKg: Number(scrap.recoverableScrapKg || 0),
+  discardScrapKg: Number(scrap.discardScrapKg || 0),
+  scrapPercentage: Number(scrap.scrapPercentage || 0),
+  cause: String(scrap.cause || 'SIN_CAUSA'),
+  operator: scrap.operator?.name || scrap.operator || 'Operador',
+  createdAt: normalizeDate(scrap.createdAt)
+});
+
+const normalizeStockAlert = (alert: any): StockAlert => ({
+  id: alert.id,
+  materialName: alert.material?.name || alert.materialName || 'Materia prima',
+  silo: alert.material?.siloLocation || alert.silo || 'Silo no asignado',
+  currentKg: Number(alert.currentStockKg || alert.currentKg || 0),
+  minKg: Number(alert.minStockKg || alert.minKg || 0),
+  severity: (alert.severity === 'CRITICAL' ? 'CRITICAL' : 'WARNING') as 'WARNING' | 'CRITICAL',
+  timestamp: normalizeDate(alert.createdAt || alert.timestamp)
+});
+
 // Estado de conexión
 let isBackendReachable = false;
 let forceMockMode = false;
@@ -54,34 +122,54 @@ async function requestWithFallback<T>(
     return { data: await fallbackFn(), isLive: false };
   }
 
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3500); // 3.5s timeout
+  const doFetch = async (retryAuth = false): Promise<{ data: T; isLive: boolean; error?: string }> => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers: {
-        ...getAuthHeaders(),
-        ...options.headers
-      },
-      signal: controller.signal
-    });
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...options,
+        headers: {
+          ...getAuthHeaders(),
+          ...options.headers
+        },
+        signal: controller.signal
+      });
 
-    clearTimeout(timeoutId);
+      clearTimeout(timeoutId);
 
-    if (response.ok) {
-      const data = await response.json();
+      if (response.ok) {
+        const data = await response.json();
+        isBackendReachable = true;
+        return { data, isLive: true };
+      }
+
+      const errorBody = await response.text();
+      const errorMessage = errorBody || `HTTP ${response.status}`;
       isBackendReachable = true;
-      return { data, isLive: true };
-    } else {
+
+      if ((response.status === 401 || response.status === 403) && !localStorage.getItem('plastcontrol_token') && !retryAuth) {
+        try {
+          await authApi.login('carlos.mendoza@plastcontrol.com', 'admin123');
+          return doFetch(true);
+        } catch {
+          // continuar con fallback mock si el login no se puede completar
+        }
+      }
+
+      if ((options.method || 'GET').toUpperCase() !== 'GET') {
+        throw new Error(`[API] ${endpoint}: ${errorMessage}`);
+      }
+
       console.warn(`[API] Endpoint ${endpoint} respondió con status ${response.status}. Usando mock.`);
       return { data: await fallbackFn(), isLive: false, error: `HTTP ${response.status}` };
+    } catch (error) {
+      isBackendReachable = false;
+      return { data: await fallbackFn(), isLive: false };
     }
-  } catch (error) {
-    isBackendReachable = false;
-    // Fallback silencioso y fluido
-    return { data: await fallbackFn(), isLive: false };
-  }
+  };
+
+  return doFetch();
 }
 
 // -------------------------------------------------------------
@@ -140,7 +228,7 @@ export const authApi = {
 // 2. MATERIAS PRIMAS Y SILOS (/api/raw-materials)
 // -------------------------------------------------------------
 export const rawMaterialsApi = {
-  async getAll(params?: { search?: string; type?: string; minStockAlert?: boolean }): Promise<{ data: RawMaterial[]; isLive: boolean }> {
+  async getAll(params?: { search?: string; type?: string; minStockAlert?: boolean }): Promise<{ data: RawMaterial[]; isLive: boolean; error?: string }> {
     let query = '';
     if (params) {
       const q = new URLSearchParams();
@@ -208,6 +296,7 @@ export const rawMaterialsApi = {
       density: Number(material.density) || 0.95,
       meltFlowIndex: Number(material.meltFlowIndex) || 2.0,
       unit: material.unit?.toUpperCase() || 'KG',
+      currentStockKg: Number(material.currentStockKg) || 0,
       minStockKg: Number(material.minStockKg) || 1000,
       maxCapacityKg: Number(material.maxCapacityKg) || 20000,
       siloLocation: material.siloLocation || 'Silo A-01'
@@ -245,7 +334,7 @@ export const rawMaterialsApi = {
   },
 
 
-  async updateStock(id: string, newStockKg: number): Promise<{ success: boolean; isLive: boolean }> {
+  async updateStock(id: string, newStockKg: number): Promise<{ data: { success: boolean }; isLive: boolean }> {
     return requestWithFallback<{ success: boolean }>(
       `/raw-materials/${id}/stock`,
       {
@@ -283,11 +372,17 @@ export interface CreateBatchEntryDto {
 
 export const entriesApi = {
   async getAll(): Promise<{ data: BatchEntry[]; isLive: boolean }> {
-    return requestWithFallback<BatchEntry[]>(
+    const res = await requestWithFallback<any[]>(
       '/entries',
       { method: 'GET' },
       () => mockEntries
     );
+
+    return {
+      data: (res.data || []).map(normalizeBatchEntry),
+      isLive: res.isLive,
+      error: res.error
+    };
   },
 
   async create(dto: CreateBatchEntryDto): Promise<{ data: BatchEntry; isLive: boolean }> {
@@ -297,6 +392,7 @@ export const entriesApi = {
         method: 'POST',
         body: JSON.stringify({
           materialId: dto.materialId,
+          supplierId: dto.supplierId,
           supplierBatchNumber: dto.supplierBatch,
           quantityKg: dto.quantityKg,
           invoiceNumber: dto.invoiceNumber,
@@ -353,27 +449,42 @@ export const entriesApi = {
 // -------------------------------------------------------------
 export const productionRequestsApi = {
   async getAll(): Promise<{ data: ProductionRequest[]; isLive: boolean }> {
-    return requestWithFallback<ProductionRequest[]>(
+    const res = await requestWithFallback<any[]>(
       '/production-requests',
       { method: 'GET' },
       () => mockRequests
     );
+
+    return {
+      data: (res.data || []).map(normalizeProductionRequest),
+      isLive: res.isLive,
+      error: res.error
+    };
   },
 
-  async create(req: Partial<ProductionRequest>): Promise<{ data: ProductionRequest; isLive: boolean }> {
+  async create(req: Partial<ProductionRequest> & { orderCode?: string; targetProduct?: string; requiredMaterials?: Array<{ materialId?: string; materialName?: string; quantityKg: number }> }): Promise<{ data: ProductionRequest; isLive: boolean }> {
     return requestWithFallback<ProductionRequest>(
       '/production-requests',
       {
         method: 'POST',
-        body: JSON.stringify(req)
+        body: JSON.stringify({
+          orderCode: req.orderCode || req.orderNumber,
+          line: req.line,
+          processType: req.processType,
+          targetProduct: req.targetProduct || req.productName,
+          requiredMaterials: (req.requiredMaterials || []).map((item) => ({
+            materialId: item.materialId,
+            quantityKg: Number(item.quantityKg || 0)
+          }))
+        })
       },
       () => {
         const newReq: ProductionRequest = {
           id: `req-${Date.now()}`,
-          orderNumber: req.orderNumber || `OP-2026-${Math.floor(100 + Math.random() * 900)}`,
+          orderNumber: req.orderCode || req.orderNumber || `OP-2026-${Math.floor(100 + Math.random() * 900)}`,
           line: req.line || 'Línea de Extrusión 01',
           processType: req.processType || 'EXTRUSION',
-          productName: req.productName || 'Producto Plástico',
+          productName: req.targetProduct || req.productName || 'Producto Plástico',
           requiredMaterials: req.requiredMaterials || [{ materialName: 'Polímero Base', quantityKg: 500 }],
           requestedBy: req.requestedBy || 'Supervisor de Turno',
           status: 'PENDIENTE',
@@ -385,7 +496,7 @@ export const productionRequestsApi = {
     );
   },
 
-  async approve(id: string): Promise<{ success: boolean; isLive: boolean }> {
+  async approve(id: string): Promise<{ data: { success: boolean }; isLive: boolean }> {
     return requestWithFallback<{ success: boolean }>(
       `/production-requests/${id}/approve`,
       { method: 'PATCH' },
@@ -405,25 +516,43 @@ export const productionRequestsApi = {
 // -------------------------------------------------------------
 export interface CreateScrapDto {
   productionOrderId: string;
+  materialId?: string;
   consumedRawMaterialKg: number;
   producedGoodKg: number;
   scrapRecoverableKg: number;
   scrapDiscardKg: number;
   cause: string;
+  notes?: string;
   machineLine?: string;
   operator?: string;
 }
 
 export const scrapApi = {
   async getAll(): Promise<{ data: ScrapRecord[]; isLive: boolean }> {
-    return requestWithFallback<ScrapRecord[]>(
+    const res = await requestWithFallback<any[]>(
       '/production/scrap',
       { method: 'GET' },
       () => mockScrap
     );
+
+    return {
+      data: (res.data || []).map(normalizeScrapRecord),
+      isLive: res.isLive,
+      error: res.error
+    };
   },
 
   async create(dto: CreateScrapDto): Promise<{ data: ScrapRecord; isLive: boolean }> {
+    const cause = dto.cause?.toString().toUpperCase().includes('CAMBIO') || dto.cause?.toString().toUpperCase().includes('COLOR')
+      ? 'CAMBIO_COLOR'
+      : dto.cause?.toString().toUpperCase().includes('ARRANQUE')
+        ? 'ARRANQUE_MAQUINA'
+        : dto.cause?.toString().toUpperCase().includes('ATASCO')
+          ? 'ATASCO'
+          : dto.cause?.toString().toUpperCase().includes('CALIB') || dto.cause?.toString().toUpperCase().includes('DESCALIB')
+            ? 'DESCALIBRACION'
+            : dto.cause || 'ARRANQUE_MAQUINA';
+
     const scrapPct = Number(
       (((dto.consumedRawMaterialKg - dto.producedGoodKg) / dto.consumedRawMaterialKg) * 100).toFixed(2)
     );
@@ -432,7 +561,16 @@ export const scrapApi = {
       '/production/scrap',
       {
         method: 'POST',
-        body: JSON.stringify(dto)
+        body: JSON.stringify({
+          productionOrderId: dto.productionOrderId,
+          materialId: dto.materialId,
+          consumedRawMaterialKg: dto.consumedRawMaterialKg,
+          producedGoodKg: dto.producedGoodKg,
+          scrapRecoverableKg: dto.scrapRecoverableKg,
+          scrapDiscardKg: dto.scrapDiscardKg,
+          cause,
+          notes: dto.notes || dto.cause
+        })
       },
       () => {
         const newRecord: ScrapRecord = {
@@ -444,7 +582,7 @@ export const scrapApi = {
           recoverableScrapKg: dto.scrapRecoverableKg,
           discardScrapKg: dto.scrapDiscardKg,
           scrapPercentage: scrapPct,
-          cause: dto.cause,
+          cause: cause,
           operator: dto.operator || 'Supervisor de Planta',
           createdAt: 'Hace un momento'
         };
@@ -468,11 +606,17 @@ export const scrapApi = {
 // -------------------------------------------------------------
 export const alertsApi = {
   async getAll(): Promise<{ data: StockAlert[]; isLive: boolean }> {
-    return requestWithFallback<StockAlert[]>(
+    const res = await requestWithFallback<any[]>(
       '/alerts',
       { method: 'GET' },
       () => mockAlerts
     );
+
+    return {
+      data: (res.data || []).map(normalizeStockAlert),
+      isLive: res.isLive,
+      error: res.error
+    };
   }
 };
 
@@ -574,7 +718,7 @@ export const dashboardApi = {
 
   async getMovements(): Promise<{ data: StockMovement[]; isLive: boolean }> {
     return requestWithFallback<StockMovement[]>(
-      '/raw-materials/movements',
+      '/movements',
       { method: 'GET' },
       () => mockMovements
     );

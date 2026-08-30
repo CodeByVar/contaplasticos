@@ -14,6 +14,13 @@ import { ReportsService } from './reports.service';
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
+  @Get('dashboard-kpis')
+  @Roles('ADMIN', 'ALMACEN', 'PRODUCCION', 'SUPERVISOR')
+  @ApiOperation({ summary: 'Indicadores clave del dashboard principal' })
+  async dashboardKpis(@Res() response: Response) {
+    return response.json(await this.reportsService.dashboardKpis());
+  }
+
   @Get('monthly-balance')
   @Roles('ADMIN', 'ALMACEN', 'SUPERVISOR')
   @ApiOperation({ summary: 'Balance mensual de movimientos' })

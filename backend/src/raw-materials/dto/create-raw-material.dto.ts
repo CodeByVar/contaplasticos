@@ -35,6 +35,12 @@ export class CreateRawMaterialDto {
   @Type(() => Number)
   @IsNumber()
   @Min(0)
+  currentStockKg?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
   minStockKg?: number;
 
   @IsOptional()

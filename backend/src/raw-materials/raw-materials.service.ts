@@ -139,9 +139,10 @@ export class RawMaterialsService implements OnModuleInit {
         type: data.type ?? MaterialType.RESINA,
         category: data.category ?? ProcessType.EXTRUSION,
         unit: data.unit ?? 'KG',
+        currentStockKg: data.currentStockKg ?? 0,
         minStockKg: data.minStockKg ?? 1000,
         maxCapacityKg: data.maxCapacityKg ?? 20000,
-        status: this.calculateStatus(0, data.minStockKg ?? 1000),
+        status: this.calculateStatus(data.currentStockKg ?? 0, data.minStockKg ?? 1000),
       },
     });
   }
@@ -150,7 +151,7 @@ export class RawMaterialsService implements OnModuleInit {
     await this.findOne(id);
     const current = await this.prisma.rawMaterial.findUniqueOrThrow({ where: { id } });
     const minStockKg = data.minStockKg ?? current.minStockKg;
-    const currentStockKg = current.currentStockKg;
+    const currentStockKg = data.currentStockKg ?? current.currentStockKg;
 
     return this.prisma.rawMaterial.update({
       where: { id },
