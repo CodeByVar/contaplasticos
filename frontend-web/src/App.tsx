@@ -4,6 +4,8 @@ import { DashboardPrincipal } from './components/DashboardPrincipal';
 import { RawMaterialsView } from './components/RawMaterialsView';
 import { BatchEntriesView } from './components/BatchEntriesView';
 import { ProductionOrdersView } from './components/ProductionOrdersView';
+import { ProductionLinesView } from './components/ProductionLinesView';
+import { MaterialConsumptionView } from './components/MaterialConsumptionView';
 import { ScrapControlView } from './components/ScrapControlView';
 import { SuppliersView } from './components/SuppliersView';
 import { ReportsView } from './components/ReportsView';
@@ -177,8 +179,19 @@ function AppContent() {
             <BatchEntriesView />
           )}
 
-          {(activeSection === 'salidas' || activeSection === 'produccion' || activeSection === 'ordenes' || activeSection === 'consumo') && (
+          {/* Módulo 10: Producción & Monitoreo de Líneas */}
+          {activeSection === 'produccion' && (
+            <ProductionLinesView />
+          )}
+
+          {/* Módulo 11: Órdenes de Producción & Solicitudes */}
+          {(activeSection === 'ordenes' || activeSection === 'salidas') && (
             <ProductionOrdersView />
+          )}
+
+          {/* Módulo 12: Consumo de Material en Tolvas */}
+          {activeSection === 'consumo' && (
+            <MaterialConsumptionView />
           )}
 
           {activeSection === 'merma' && (
