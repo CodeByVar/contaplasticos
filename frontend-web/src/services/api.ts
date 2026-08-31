@@ -148,7 +148,13 @@ async function requestWithFallback<T>(
       const errorMessage = errorBody || `HTTP ${response.status}`;
       isBackendReachable = true;
 
-      if ((response.status === 401 || response.status === 403) && !localStorage.getItem('plastcontrol_token') && !retryAuth) {
+      if ((response.status === 401 || response.status === 403) && !retryAuth) {
+        const hasStoredToken = !!localStorage.getItem('plastcontrol_token');
+        if (hasStoredToken) {
+          localStorage.removeItem('plastcontrol_token');
+          localStorage.removeItem('plastcontrol_user');
+        }
+
         try {
           await authApi.login('carlos.mendoza@plastcontrol.com', 'admin123');
           return doFetch(true);

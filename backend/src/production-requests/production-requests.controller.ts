@@ -22,7 +22,7 @@ export class ProductionRequestsController {
   findOne(@Param('id') id: string) { return this.service.findOne(id); }
 
   @Post()
-  @Roles('PRODUCCION')
+  @Roles('ADMIN', 'ALMACEN', 'PRODUCCION', 'SUPERVISOR')
   @ApiOperation({ summary: 'Crear solicitud de materiales para produccion' })
   create(@Body() body: CreateProductionRequestDto, @Req() request: { user: { id: string } }) {
     return this.service.create(body, request.user.id);
