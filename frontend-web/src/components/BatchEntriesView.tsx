@@ -264,7 +264,8 @@ export const BatchEntriesView: React.FC = () => {
                   </div>
                 </td>
               </tr>
-            ))}
+            );
+          })}
           </tbody>
         </table>
       </div>
